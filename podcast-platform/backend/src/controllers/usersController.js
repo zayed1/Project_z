@@ -44,7 +44,7 @@ async function register(req, res) {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // إنشاء المستخدم | Create user
-    const userRole = role === 'creator' || role === 'listener' ? role : 'listener';
+    const userRole = role === 'admin' ? 'admin' : 'listener';
     const { data: newUser, error } = await supabase
       .from('users')
       .insert({

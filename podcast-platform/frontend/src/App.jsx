@@ -1,24 +1,12 @@
 // ============================================
 // التطبيق الرئيسي | Main App Component
 // ============================================
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import PodcastDetail from './pages/PodcastDetail';
-import Dashboard from './pages/Dashboard';
-
-// مكون حماية المسارات | Protected Route Component
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  return user ? children : <Navigate to="/login" />;
-}
+import Admin from './pages/Admin';
 
 export default function App() {
-  const { user, logout } = useAuth();
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* شريط التنقل | Navigation Bar */}
@@ -31,37 +19,6 @@ export default function App() {
             <Link to="/" className="text-gray-600 hover:text-primary-600 transition-colors">
               الرئيسية
             </Link>
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-primary-600 transition-colors"
-                >
-                  لوحة التحكم
-                </Link>
-                <button
-                  onClick={logout}
-                  className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  خروج
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-gray-600 hover:text-primary-600 transition-colors"
-                >
-                  دخول
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-1.5 rounded-lg transition-colors text-sm"
-                >
-                  تسجيل
-                </Link>
-              </>
-            )}
           </div>
         </div>
       </nav>
@@ -71,16 +28,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/podcast/:id" element={<PodcastDetail />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
 
