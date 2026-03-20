@@ -75,6 +75,28 @@ CREATE TABLE IF NOT EXISTS episodes (
 );
 
 -- ============================================
+-- جدول التعليقات | Comments Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS comments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- جدول سجل النشاطات | Activity Logs Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  details TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
 -- الفهارس | Indexes
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_podcasts_creator_id ON podcasts(creator_id);
@@ -82,6 +104,8 @@ CREATE INDEX IF NOT EXISTS idx_podcasts_category_id ON podcasts(category_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_podcast_id ON episodes(podcast_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_published_at ON episodes(published_at);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_comments_episode_id ON comments(episode_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
 
 -- ============================================
 -- سياسات أمان الصفوف (RLS) | Row Level Security
@@ -90,6 +114,8 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE podcasts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "public_read" ON categories FOR SELECT USING (true);
 CREATE POLICY "podcasts_public_read" ON podcasts FOR SELECT USING (true);
@@ -104,6 +130,11 @@ CREATE POLICY "episodes_update" ON episodes FOR UPDATE USING (true);
 CREATE POLICY "episodes_delete" ON episodes FOR DELETE USING (true);
 CREATE POLICY "users_insert" ON users FOR INSERT WITH CHECK (true);
 CREATE POLICY "users_update" ON users FOR UPDATE USING (true);
+CREATE POLICY "comments_public_read" ON comments FOR SELECT USING (true);
+CREATE POLICY "comments_insert" ON comments FOR INSERT WITH CHECK (true);
+CREATE POLICY "comments_delete" ON comments FOR DELETE USING (true);
+CREATE POLICY "activity_logs_read" ON activity_logs FOR SELECT USING (true);
+CREATE POLICY "activity_logs_insert" ON activity_logs FOR INSERT WITH CHECK (true);
 
 -- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets

@@ -1,5 +1,6 @@
 // ============================================
 // سياق مشغل الصوت العام | Global Audio Player Context
+// مع قائمة تشغيل | With Playlist Support
 // ============================================
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import api from '../utils/api';
@@ -16,18 +17,30 @@ export function PlayerProvider({ children }) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [listenRecorded, setListenRecorded] = useState(false);
 
+  // قائمة التشغيل | Playlist
+  const [playlist, setPlaylist] = useState([]);
+  const [playlistIndex, setPlaylistIndex] = useState(-1);
+
   const audio = audioRef.current;
 
   useEffect(() => {
     const onTime = () => {
       setCurrentTime(audio.currentTime);
-      // حفظ الموضع الحالي | Save current position
       if (currentEpisode) {
         localStorage.setItem(`pos_${currentEpisode.id}`, String(audio.currentTime));
       }
     };
     const onMeta = () => setDuration(audio.duration || 0);
-    const onEnd = () => setIsPlaying(false);
+    const onEnd = () => {
+      setIsPlaying(false);
+      // تشغيل الحلقة التالية تلقائياً | Auto-play next
+      if (playlist.length > 0 && playlistIndex < playlist.length - 1) {
+        const nextIdx = playlistIndex + 1;
+        const nextEp = playlist[nextIdx];
+        setPlaylistIndex(nextIdx);
+        loadAndPlay(nextEp);
+      }
+    };
 
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
@@ -38,7 +51,7 @@ export function PlayerProvider({ children }) {
       audio.removeEventListener('loadedmetadata', onMeta);
       audio.removeEventListener('ended', onEnd);
     };
-  }, [audio, currentEpisode]);
+  }, [audio, currentEpisode, playlist, playlistIndex]);
 
   // تسجيل الاستماع بعد 30 ثانية | Record listen after 30s
   useEffect(() => {
@@ -48,29 +61,36 @@ export function PlayerProvider({ children }) {
     }
   }, [currentTime, listenRecorded, currentEpisode]);
 
+  function loadAndPlay(episode) {
+    audio.src = episode.audio_file_url;
+    audio.playbackRate = playbackRate;
+    setCurrentEpisode(episode);
+    setListenRecorded(false);
+
+    const savedPos = localStorage.getItem(`pos_${episode.id}`);
+    if (savedPos) audio.currentTime = parseFloat(savedPos);
+
+    audio.play();
+    setIsPlaying(true);
+  }
+
   // تشغيل حلقة | Play an episode
-  const playEpisode = useCallback((episode, podcast = '') => {
+  const playEpisode = useCallback((episode, podcast = '', episodes = []) => {
     if (currentEpisode?.id === episode.id) {
-      // نفس الحلقة - toggle
       if (isPlaying) { audio.pause(); setIsPlaying(false); }
       else { audio.play(); setIsPlaying(true); }
       return;
     }
 
-    audio.src = episode.audio_file_url;
-    audio.playbackRate = playbackRate;
-    setPodcastTitle(podcast);
-    setCurrentEpisode(episode);
-    setListenRecorded(false);
-
-    // استعادة الموضع المحفوظ | Restore saved position
-    const savedPos = localStorage.getItem(`pos_${episode.id}`);
-    if (savedPos) {
-      audio.currentTime = parseFloat(savedPos);
+    // إعداد قائمة التشغيل | Setup playlist
+    if (episodes.length > 0) {
+      setPlaylist(episodes);
+      const idx = episodes.findIndex((e) => e.id === episode.id);
+      setPlaylistIndex(idx >= 0 ? idx : 0);
     }
 
-    audio.play();
-    setIsPlaying(true);
+    setPodcastTitle(podcast);
+    loadAndPlay(episode);
   }, [audio, currentEpisode, isPlaying, playbackRate]);
 
   const togglePlay = () => {
@@ -88,10 +108,31 @@ export function PlayerProvider({ children }) {
     audio.playbackRate = rate;
   };
 
+  // الحلقة التالية والسابقة | Next/previous
+  const playNext = () => {
+    if (playlistIndex < playlist.length - 1) {
+      const nextIdx = playlistIndex + 1;
+      setPlaylistIndex(nextIdx);
+      loadAndPlay(playlist[nextIdx]);
+    }
+  };
+  const playPrev = () => {
+    if (playlistIndex > 0) {
+      const prevIdx = playlistIndex - 1;
+      setPlaylistIndex(prevIdx);
+      loadAndPlay(playlist[prevIdx]);
+    }
+  };
+
+  const hasNext = playlist.length > 0 && playlistIndex < playlist.length - 1;
+  const hasPrev = playlist.length > 0 && playlistIndex > 0;
+
   return (
     <PlayerContext.Provider value={{
       currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
+      playlist, playlistIndex, hasNext, hasPrev,
       playEpisode, togglePlay, seek, skipForward, skipBackward, changeSpeed,
+      playNext, playPrev,
     }}>
       {children}
     </PlayerContext.Provider>

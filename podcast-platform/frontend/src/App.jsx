@@ -8,7 +8,9 @@ import GlobalPlayer from './components/GlobalPlayer';
 import Home from './pages/Home';
 import PodcastDetail from './pages/PodcastDetail';
 import About from './pages/About';
+import ListenLaterPage from './pages/ListenLaterPage';
 import Admin from './pages/Admin';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   const { dark, toggleTheme } = useTheme();
@@ -26,11 +28,16 @@ export default function App() {
             <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               الرئيسية
             </Link>
+            <Link to="/listen-later" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              قائمتي
+            </Link>
             <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               عن المنصة
             </Link>
 
-            {/* زر الوضع الليلي | Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -46,22 +53,21 @@ export default function App() {
         </div>
       </nav>
 
-      {/* المحتوى الرئيسي | Main Content */}
       <main className={`max-w-6xl mx-auto px-4 py-8 ${currentEpisode ? 'pb-28' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/podcast/:id" element={<PodcastDetail />} />
           <Route path="/about" element={<About />} />
+          <Route path="/listen-later" element={<ListenLaterPage />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
-      {/* الفوتر | Footer */}
       <footer className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16 py-6 text-center text-sm text-gray-500 dark:text-gray-400 transition-colors ${currentEpisode ? 'mb-20' : ''}`}>
         <p>منصة البودكاست &copy; {new Date().getFullYear()}</p>
       </footer>
 
-      {/* المشغل العام الثابت | Fixed Global Player */}
       <GlobalPlayer />
     </div>
   );

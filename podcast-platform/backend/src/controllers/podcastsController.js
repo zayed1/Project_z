@@ -262,6 +262,25 @@ async function getStats(req, res) {
   }
 }
 
+// بحث تلقائي | Autocomplete search
+async function autocompleteSearch(req, res) {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ suggestions: [] });
+
+    const { data, error } = await supabase
+      .from('podcasts')
+      .select('id, title, cover_image_url')
+      .ilike('title', `%${q}%`)
+      .limit(5);
+
+    if (error) throw error;
+    res.json({ suggestions: data || [] });
+  } catch (err) {
+    res.status(500).json({ suggestions: [] });
+  }
+}
+
 module.exports = {
   getAllPodcasts,
   getCategories,
@@ -271,4 +290,5 @@ module.exports = {
   uploadCoverImage,
   deletePodcast,
   getStats,
+  autocompleteSearch,
 };

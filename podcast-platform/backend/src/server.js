@@ -13,6 +13,8 @@ const { helmetMiddleware, generalLimiter } = require('./middleware/security');
 const podcastRoutes = require('./routes/podcasts');
 const episodeRoutes = require('./routes/episodes');
 const userRoutes = require('./routes/users');
+const commentRoutes = require('./routes/comments');
+const adminRoutes = require('./routes/admin');
 const rssRoutes = require('./routes/rss');
 const sitemapRoutes = require('./routes/sitemap');
 
@@ -45,6 +47,8 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', userRoutes);
 app.use('/api', podcastRoutes);
 app.use('/api', episodeRoutes);
+app.use('/api', commentRoutes);
+app.use('/api', adminRoutes);
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 

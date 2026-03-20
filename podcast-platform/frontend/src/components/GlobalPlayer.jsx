@@ -1,5 +1,6 @@
 // ============================================
 // المشغل العام الثابت | Fixed Global Audio Player
+// مع أزرار التالي/السابق | With Next/Prev
 // ============================================
 import { usePlayer } from '../context/PlayerContext';
 import { useState } from 'react';
@@ -15,7 +16,9 @@ function formatTime(s) {
 export default function GlobalPlayer() {
   const {
     currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
+    hasNext, hasPrev,
     togglePlay, seek, skipForward, skipBackward, changeSpeed,
+    playNext, playPrev,
   } = usePlayer();
 
   const [showSpeed, setShowSpeed] = useState(false);
@@ -54,7 +57,13 @@ export default function GlobalPlayer() {
           </div>
 
           {/* أزرار التحكم | Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* السابقة | Previous */}
+            <button onClick={playPrev} disabled={!hasPrev}
+              className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-30" title="الحلقة السابقة">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+
             <button onClick={skipBackward} className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors" title="رجوع 15 ثانية">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 3C17.15 3 21.08 6.03 22.45 10.16l-1.8.67C19.53 7.33 16.28 5 12.5 5c-2.9 0-5.47 1.38-7.12 3.5H9v2H3V4.5h2v3.18C6.86 5.29 9.5 3 12.5 3zM6 13h2v2H6v-2zm3 0h2v2H9v-2zm3 0h2v2h-2v-2z"/></svg>
             </button>
@@ -72,6 +81,12 @@ export default function GlobalPlayer() {
 
             <button onClick={skipForward} className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors" title="تقديم 15 ثانية">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 2.92 6.03 1.55 10.16l1.8.67C4.47 7.33 7.72 5 11.5 5c2.9 0 5.47 1.38 7.12 3.5H15v2h6V4.5h-2v3.18C17.14 5.29 14.5 3 11.5 3zM18 13h-2v2h2v-2zm-3 0h-2v2h2v-2zm-3 0h-2v2h2v-2z"/></svg>
+            </button>
+
+            {/* التالية | Next */}
+            <button onClick={playNext} disabled={!hasNext}
+              className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-30" title="الحلقة التالية">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
             </button>
           </div>
 

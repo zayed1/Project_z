@@ -43,6 +43,7 @@ export const podcastsAPI = {
   update: (id, data) => api.put(`/podcasts/${id}`, data),
   delete: (id) => api.delete(`/podcasts/${id}`),
   getCategories: () => api.get('/categories'),
+  autocomplete: (q) => api.get('/search/autocomplete', { params: { q } }),
   uploadCover: (formData) => api.post('/upload/cover', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
@@ -59,6 +60,19 @@ export const episodesAPI = {
   update: (episodeId, data) => api.put(`/episodes/${episodeId}`, data),
   delete: (episodeId) => api.delete(`/episodes/${episodeId}`),
   recordListen: (episodeId) => api.post(`/episodes/${episodeId}/listen`),
+};
+
+// التعليقات | Comments
+export const commentsAPI = {
+  getAll: (episodeId) => api.get(`/episodes/${episodeId}/comments`),
+  add: (episodeId, content) => api.post(`/episodes/${episodeId}/comments`, { content }),
+  delete: (commentId) => api.delete(`/comments/${commentId}`),
+};
+
+// المشرف | Admin
+export const adminAPI = {
+  getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
+  exportData: (format) => api.get('/admin/export', { params: { format }, responseType: format === 'csv' ? 'blob' : 'json' }),
 };
 
 export default api;

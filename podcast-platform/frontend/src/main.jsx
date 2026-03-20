@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PlayerProvider } from './context/PlayerContext';
+import { ToastProvider } from './context/ToastContext';
 import App from './App';
 import './index.css';
 
@@ -13,11 +14,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <BrowserRouter>
         <ThemeProvider>
-          <AuthProvider>
-            <PlayerProvider>
-              <App />
-            </PlayerProvider>
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <PlayerProvider>
+                <App />
+              </PlayerProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </BrowserRouter>
     </HelmetProvider>
