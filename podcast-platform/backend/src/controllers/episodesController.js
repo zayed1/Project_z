@@ -7,55 +7,49 @@ const { supabase, uploadAudioFile, deleteAudioFile } = require('../config/supaba
 async function createEpisode(req, res) {
   try {
     const { podcastId } = req.params;
-    const { title, description, episode_number } = req.body;
+    const { title, description, episode_number, scheduled_at } = req.body;
 
     if (!title) {
-      return res.status(400).json({
-        error: true,
-        message: 'عنوان الحلقة مطلوب | Episode title is required',
-      });
+      return res.status(400).json({ error: true, message: 'عنوان الحلقة مطلوب' });
     }
 
     if (!req.file) {
-      return res.status(400).json({
-        error: true,
-        message: 'الملف الصوتي مطلوب | Audio file is required',
-      });
+      return res.status(400).json({ error: true, message: 'الملف الصوتي مطلوب' });
     }
 
-    // رفع الملف الصوتي إلى Supabase Storage | Upload audio to storage
     const audioUrl = await uploadAudioFile(
       req.file.buffer,
       req.file.originalname,
       req.file.mimetype
     );
 
-    // إنشاء الحلقة في قاعدة البيانات | Create episode in DB
+    const insertData = {
+      podcast_id: podcastId,
+      title,
+      description: description || null,
+      audio_file_url: audioUrl,
+      episode_number: episode_number ? parseInt(episode_number, 10) : null,
+    };
+
+    // جدولة النشر أو النشر الفوري | Schedule or publish immediately
+    if (scheduled_at) {
+      insertData.scheduled_at = scheduled_at;
+    } else {
+      insertData.published_at = new Date().toISOString();
+    }
+
     const { data: episode, error } = await supabase
       .from('episodes')
-      .insert({
-        podcast_id: podcastId,
-        title,
-        description: description || null,
-        audio_file_url: audioUrl,
-        episode_number: episode_number ? parseInt(episode_number, 10) : null,
-        published_at: new Date().toISOString(),
-      })
+      .insert(insertData)
       .select('*')
       .single();
 
     if (error) throw error;
 
-    res.status(201).json({
-      message: 'تم إضافة الحلقة بنجاح | Episode created successfully',
-      episode,
-    });
+    res.status(201).json({ message: 'تم إضافة الحلقة بنجاح', episode });
   } catch (err) {
-    console.error('خطأ في إنشاء الحلقة | Create episode error:', err.message);
-    res.status(500).json({
-      error: true,
-      message: 'حدث خطأ في إنشاء الحلقة | Failed to create episode',
-    });
+    console.error('خطأ في إنشاء الحلقة:', err.message);
+    res.status(500).json({ error: true, message: 'حدث خطأ في إنشاء الحلقة' });
   }
 }
 
@@ -71,14 +65,10 @@ async function getEpisodes(req, res) {
       .order('episode_number', { ascending: true });
 
     if (error) throw error;
-
     res.json({ episodes: episodes || [] });
   } catch (err) {
-    console.error('خطأ في جلب الحلقات | Fetch episodes error:', err.message);
-    res.status(500).json({
-      error: true,
-      message: 'حدث خطأ في جلب الحلقات | Failed to fetch episodes',
-    });
+    console.error('خطأ في جلب الحلقات:', err.message);
+    res.status(500).json({ error: true, message: 'حدث خطأ في جلب الحلقات' });
   }
 }
 
@@ -86,12 +76,13 @@ async function getEpisodes(req, res) {
 async function updateEpisode(req, res) {
   try {
     const { episodeId } = req.params;
-    const { title, description, episode_number } = req.body;
+    const { title, description, episode_number, scheduled_at } = req.body;
 
     const updateData = { updated_at: new Date().toISOString() };
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (episode_number !== undefined) updateData.episode_number = parseInt(episode_number, 10);
+    if (scheduled_at !== undefined) updateData.scheduled_at = scheduled_at;
 
     const { data: episode, error } = await supabase
       .from('episodes')
@@ -102,16 +93,36 @@ async function updateEpisode(req, res) {
 
     if (error) throw error;
 
-    res.json({
-      message: 'تم تعديل الحلقة بنجاح | Episode updated successfully',
-      episode,
-    });
+    res.json({ message: 'تم تعديل الحلقة بنجاح', episode });
   } catch (err) {
-    console.error('خطأ في تعديل الحلقة | Update episode error:', err.message);
-    res.status(500).json({
-      error: true,
-      message: 'حدث خطأ في تعديل الحلقة | Failed to update episode',
-    });
+    console.error('خطأ في تعديل الحلقة:', err.message);
+    res.status(500).json({ error: true, message: 'حدث خطأ في تعديل الحلقة' });
+  }
+}
+
+// تسجيل استماع | Record listen
+async function recordListen(req, res) {
+  try {
+    const { episodeId } = req.params;
+
+    const { data: episode } = await supabase
+      .from('episodes')
+      .select('listen_count')
+      .eq('id', episodeId)
+      .single();
+
+    if (!episode) {
+      return res.status(404).json({ error: true, message: 'الحلقة غير موجودة' });
+    }
+
+    await supabase
+      .from('episodes')
+      .update({ listen_count: (episode.listen_count || 0) + 1 })
+      .eq('id', episodeId);
+
+    res.json({ message: 'ok' });
+  } catch (err) {
+    res.status(500).json({ error: true, message: 'فشل' });
   }
 }
 
@@ -120,19 +131,16 @@ async function deleteEpisode(req, res) {
   try {
     const { episodeId } = req.params;
 
-    // جلب بيانات الحلقة للحصول على رابط الملف | Get episode data for file URL
     const { data: episode } = await supabase
       .from('episodes')
       .select('audio_file_url')
       .eq('id', episodeId)
       .single();
 
-    // حذف الملف الصوتي من Storage | Delete audio file
     if (episode && episode.audio_file_url) {
       await deleteAudioFile(episode.audio_file_url);
     }
 
-    // حذف الحلقة من قاعدة البيانات | Delete from DB
     const { error } = await supabase
       .from('episodes')
       .delete()
@@ -140,15 +148,10 @@ async function deleteEpisode(req, res) {
 
     if (error) throw error;
 
-    res.json({
-      message: 'تم حذف الحلقة بنجاح | Episode deleted successfully',
-    });
+    res.json({ message: 'تم حذف الحلقة بنجاح' });
   } catch (err) {
-    console.error('خطأ في حذف الحلقة | Delete episode error:', err.message);
-    res.status(500).json({
-      error: true,
-      message: 'حدث خطأ في حذف الحلقة | Failed to delete episode',
-    });
+    console.error('خطأ في حذف الحلقة:', err.message);
+    res.status(500).json({ error: true, message: 'حدث خطأ في حذف الحلقة' });
   }
 }
 
@@ -156,5 +159,6 @@ module.exports = {
   createEpisode,
   getEpisodes,
   updateEpisode,
+  recordListen,
   deleteEpisode,
 };

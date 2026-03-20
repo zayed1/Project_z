@@ -7,20 +7,27 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const { helmetMiddleware, generalLimiter } = require('./middleware/security');
 
 // استيراد الراوترات | Import Routes
 const podcastRoutes = require('./routes/podcasts');
 const episodeRoutes = require('./routes/episodes');
 const userRoutes = require('./routes/users');
+const rssRoutes = require('./routes/rss');
+const sitemapRoutes = require('./routes/sitemap');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================
+// الأمان | Security
+// ============================================
+app.use(helmetMiddleware);
+app.use(generalLimiter);
+
+// ============================================
 // الـ Middleware العام | Global Middleware
 // ============================================
-
-// إعدادات CORS للسماح بالطلبات من الفرونت إند
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
@@ -28,10 +35,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// تسجيل الطلبات | Request Logging
 app.use(morgan('dev'));
-
-// تحليل الطلبات | Body Parsing
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -41,6 +45,8 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', userRoutes);
 app.use('/api', podcastRoutes);
 app.use('/api', episodeRoutes);
+app.use('/rss', rssRoutes);
+app.use(sitemapRoutes);
 
 // نقطة فحص صحة الخادم | Health Check
 app.get('/api/health', (req, res) => {
@@ -64,7 +70,6 @@ app.use((err, req, res, _next) => {
   });
 });
 
-// معالجة الراوترات غير الموجودة | 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     error: true,
@@ -76,6 +81,5 @@ app.use((req, res) => {
 // تشغيل الخادم | Start Server
 // ============================================
 app.listen(PORT, () => {
-  console.log(`🎙️  خادم منصة البودكاست يعمل على البورت ${PORT}`);
-  console.log(`🎙️  Podcast platform server running on port ${PORT}`);
+  console.log(`خادم منصة البودكاست يعمل على البورت ${PORT}`);
 });

@@ -5,3 +5,8 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* الوضع الليلي | Dark mode base */
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}

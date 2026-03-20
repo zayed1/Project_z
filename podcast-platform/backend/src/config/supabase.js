@@ -65,9 +65,41 @@ async function deleteAudioFile(fileUrl) {
   }
 }
 
+// رفع صورة غلاف إلى Supabase Storage | Upload cover image
+async function uploadImageFile(fileBuffer, fileName, mimeType) {
+  const bucket = 'podcast-covers';
+  const filePath = `covers/${Date.now()}-${fileName}`;
+
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .upload(filePath, fileBuffer, {
+      contentType: mimeType,
+      upsert: false,
+    });
+
+  if (error) throw new Error(`فشل رفع الصورة: ${error.message}`);
+
+  const { data: urlData } = supabaseAdmin.storage
+    .from(bucket)
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
+}
+
+// حذف صورة غلاف | Delete cover image
+async function deleteImageFile(fileUrl) {
+  const bucket = 'podcast-covers';
+  const urlParts = fileUrl.split(`${bucket}/`);
+  if (urlParts.length < 2) return;
+
+  await supabaseAdmin.storage.from(bucket).remove([urlParts[1]]);
+}
+
 module.exports = {
   supabase,
   supabaseAdmin,
   uploadAudioFile,
   deleteAudioFile,
+  uploadImageFile,
+  deleteImageFile,
 };

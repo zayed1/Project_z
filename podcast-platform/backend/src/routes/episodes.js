@@ -8,44 +8,36 @@ const {
   createEpisode,
   getEpisodes,
   updateEpisode,
+  recordListen,
   deleteEpisode,
 } = require('../controllers/episodesController');
-const { authenticate, verifyPodcastOwner } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/admin');
+const { uploadLimiter } = require('../middleware/security');
 
-// إعداد Multer لرفع الملفات الصوتية | Configure Multer for audio uploads
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB حد أقصى | max file size
-  },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    // السماح فقط بالملفات الصوتية | Allow only audio files
     const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('نوع الملف غير مدعوم. يرجى رفع ملف صوتي | Unsupported file type. Please upload an audio file'));
-    }
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('نوع الملف غير مدعوم. يرجى رفع ملف صوتي'));
   },
 });
 
-// إضافة حلقة جديدة مع رفع ملف صوتي | Create episode with audio (protected + owner)
+// عام | Public
+router.get('/podcasts/:podcastId/episodes', getEpisodes);
+router.post('/episodes/:episodeId/listen', recordListen);
+
+// محمي - مشرف فقط | Protected - Admin only
 router.post(
   '/podcasts/:podcastId/episodes',
-  authenticate,
-  verifyPodcastOwner,
+  authenticate, requireAdmin, uploadLimiter,
   upload.single('audio'),
   createEpisode
 );
-
-// جلب جميع حلقات بودكاست | Get all episodes for a podcast (public)
-router.get('/podcasts/:podcastId/episodes', getEpisodes);
-
-// تعديل معلومات الحلقة | Update episode (protected)
-router.put('/episodes/:episodeId', authenticate, updateEpisode);
-
-// حذف الحلقة | Delete episode (protected)
-router.delete('/episodes/:episodeId', authenticate, deleteEpisode);
+router.put('/episodes/:episodeId', authenticate, requireAdmin, updateEpisode);
+router.delete('/episodes/:episodeId', authenticate, requireAdmin, deleteEpisode);
 
 module.exports = router;

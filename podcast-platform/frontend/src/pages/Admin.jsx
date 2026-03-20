@@ -1,32 +1,23 @@
 // ============================================
 // صفحة المشرف | Admin Page
-// تجمع تسجيل الدخول ولوحة التحكم في صفحة واحدة
 // ============================================
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { podcastsAPI, episodesAPI } from '../utils/api';
 
 export default function Admin() {
   const { user, login, logout, loading: authLoading } = useAuth();
 
-  // إذا لم يسجل الدخول يظهر نموذج الدخول | Show login if not authenticated
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" /></div>;
   }
 
-  if (!user) {
-    return <AdminLogin onLogin={login} />;
-  }
-
+  if (!user) return <AdminLogin onLogin={login} />;
   return <AdminDashboard user={user} onLogout={logout} />;
 }
 
 // ============================================
-// نموذج تسجيل دخول المشرف | Admin Login Form
+// نموذج تسجيل دخول المشرف | Admin Login
 // ============================================
 function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -38,76 +29,33 @@ function AdminLogin({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
-    try {
-      await onLogin(email, password);
-    } catch (err) {
-      setError(err.response?.data?.message || 'فشل تسجيل الدخول');
-    } finally {
-      setLoading(false);
-    }
+    try { await onLogin(email, password); }
+    catch (err) { setError(err.response?.data?.message || 'فشل تسجيل الدخول'); }
+    finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
-      <div className="w-full max-w-sm">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {/* أيقونة القفل | Lock Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
+      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-gray-800 dark:bg-gray-600 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
-
-          <h1 className="text-xl font-bold text-center text-gray-800 mb-6">
-            دخول المشرف
-          </h1>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                البريد الإلكتروني
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent outline-none"
-                placeholder="admin@example.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                كلمة المرور
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent outline-none"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {loading ? 'جاري الدخول...' : 'دخول'}
-            </button>
-          </form>
         </div>
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">دخول المشرف</h1>
+        {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-gray-800 outline-none" placeholder="admin@example.com" required />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-gray-800 outline-none" placeholder="••••••••" required />
+          <button type="submit" disabled={loading}
+            className="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50">
+            {loading ? 'جاري الدخول...' : 'دخول'}
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -118,341 +66,390 @@ function AdminLogin({ onLogin }) {
 // ============================================
 function AdminDashboard({ user, onLogout }) {
   const [podcasts, setPodcasts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState('podcasts'); // podcasts | stats
 
-  // نماذج الإنشاء | Creation forms state
   const [showPodcastForm, setShowPodcastForm] = useState(false);
+  const [editingPodcast, setEditingPodcast] = useState(null);
+  const [podcastForm, setPodcastForm] = useState({ title: '', description: '', cover_image_url: '', category_id: '' });
+  const [coverFile, setCoverFile] = useState(null);
+
   const [showEpisodeForm, setShowEpisodeForm] = useState(null);
-  const [podcastForm, setPodcastForm] = useState({ title: '', description: '', cover_image_url: '' });
-  const [episodeForm, setEpisodeForm] = useState({ title: '', description: '', episode_number: '', audio: null });
+  const [editingEpisode, setEditingEpisode] = useState(null);
+  const [episodeForm, setEpisodeForm] = useState({ title: '', description: '', episode_number: '', audio: null, scheduled_at: '' });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchAllPodcasts();
-  }, []);
-
-  // جلب جميع البودكاست (المشرف يرى الكل) | Fetch all podcasts
-  async function fetchAllPodcasts() {
+  const fetchAll = useCallback(async () => {
     try {
-      const { data } = await podcastsAPI.getAll();
-      const allPodcasts = data.podcasts || [];
-      const podcastsWithEpisodes = await Promise.all(
-        allPodcasts.map(async (podcast) => {
+      const [podRes, catRes] = await Promise.all([
+        podcastsAPI.getAll({ limit: 100 }),
+        podcastsAPI.getCategories(),
+      ]);
+      const allPodcasts = podRes.data.podcasts || [];
+      setCategories(catRes.data.categories || []);
+
+      const withEpisodes = await Promise.all(
+        allPodcasts.map(async (p) => {
           try {
-            const { data: epData } = await episodesAPI.getAll(podcast.id);
-            return { ...podcast, episodes: epData.episodes || [] };
-          } catch {
-            return { ...podcast, episodes: [] };
-          }
+            const { data } = await episodesAPI.getAll(p.id);
+            return { ...p, episodes: data.episodes || [] };
+          } catch { return { ...p, episodes: [] }; }
         })
       );
-      setPodcasts(podcastsWithEpisodes);
-    } catch {
-      setError('فشل في تحميل البيانات');
-    } finally {
-      setLoading(false);
-    }
+      setPodcasts(withEpisodes);
+    } catch { setError('فشل في تحميل البيانات'); }
+    finally { setLoading(false); }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const { data } = await podcastsAPI.getStats();
+      setStats(data.stats);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { fetchAll(); fetchStats(); }, [fetchAll, fetchStats]);
+
+  // رفع صورة غلاف | Upload cover image
+  async function uploadCover() {
+    if (!coverFile) return podcastForm.cover_image_url;
+    const fd = new FormData();
+    fd.append('image', coverFile);
+    const { data } = await podcastsAPI.uploadCover(fd);
+    return data.url;
   }
 
-  async function handleCreatePodcast(e) {
+  // إنشاء أو تعديل بودكاست | Create or update podcast
+  async function handlePodcastSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await podcastsAPI.create(podcastForm);
-      setPodcastForm({ title: '', description: '', cover_image_url: '' });
+      const imageUrl = await uploadCover();
+      const payload = { ...podcastForm, cover_image_url: imageUrl, category_id: podcastForm.category_id || null };
+
+      if (editingPodcast) {
+        await podcastsAPI.update(editingPodcast.id, payload);
+      } else {
+        await podcastsAPI.create(payload);
+      }
+      setPodcastForm({ title: '', description: '', cover_image_url: '', category_id: '' });
+      setCoverFile(null);
       setShowPodcastForm(false);
-      await fetchAllPodcasts();
-    } catch (err) {
-      setError(err.response?.data?.message || 'فشل في إنشاء البودكاست');
-    } finally {
-      setSubmitting(false);
-    }
+      setEditingPodcast(null);
+      await fetchAll();
+      await fetchStats();
+    } catch (err) { setError(err.response?.data?.message || 'فشل في حفظ البودكاست'); }
+    finally { setSubmitting(false); }
   }
 
-  async function handleCreateEpisode(e) {
+  function startEditPodcast(podcast) {
+    setEditingPodcast(podcast);
+    setPodcastForm({
+      title: podcast.title,
+      description: podcast.description || '',
+      cover_image_url: podcast.cover_image_url || '',
+      category_id: podcast.category_id || '',
+    });
+    setCoverFile(null);
+    setShowPodcastForm(true);
+  }
+
+  // إنشاء أو تعديل حلقة | Create or update episode
+  async function handleEpisodeSubmit(e) {
     e.preventDefault();
-    if (!episodeForm.audio) {
-      setError('يرجى اختيار ملف صوتي');
-      return;
-    }
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('title', episodeForm.title);
-      formData.append('description', episodeForm.description);
-      formData.append('episode_number', episodeForm.episode_number);
-      formData.append('audio', episodeForm.audio);
-
-      await episodesAPI.create(showEpisodeForm, formData);
-      setEpisodeForm({ title: '', description: '', episode_number: '', audio: null });
+      if (editingEpisode) {
+        await episodesAPI.update(editingEpisode.id, {
+          title: episodeForm.title,
+          description: episodeForm.description,
+          episode_number: episodeForm.episode_number,
+          scheduled_at: episodeForm.scheduled_at || null,
+        });
+      } else {
+        if (!episodeForm.audio) { setError('يرجى اختيار ملف صوتي'); setSubmitting(false); return; }
+        const fd = new FormData();
+        fd.append('title', episodeForm.title);
+        fd.append('description', episodeForm.description);
+        fd.append('episode_number', episodeForm.episode_number);
+        fd.append('audio', episodeForm.audio);
+        if (episodeForm.scheduled_at) fd.append('scheduled_at', episodeForm.scheduled_at);
+        await episodesAPI.create(showEpisodeForm, fd);
+      }
+      setEpisodeForm({ title: '', description: '', episode_number: '', audio: null, scheduled_at: '' });
       setShowEpisodeForm(null);
-      await fetchAllPodcasts();
-    } catch (err) {
-      setError(err.response?.data?.message || 'فشل في إضافة الحلقة');
-    } finally {
-      setSubmitting(false);
-    }
+      setEditingEpisode(null);
+      await fetchAll();
+      await fetchStats();
+    } catch (err) { setError(err.response?.data?.message || 'فشل في حفظ الحلقة'); }
+    finally { setSubmitting(false); }
   }
 
-  async function handleDeletePodcast(podcastId) {
+  function startEditEpisode(episode, podcastId) {
+    setEditingEpisode(episode);
+    setShowEpisodeForm(podcastId);
+    setEpisodeForm({
+      title: episode.title,
+      description: episode.description || '',
+      episode_number: episode.episode_number || '',
+      audio: null,
+      scheduled_at: episode.scheduled_at || '',
+    });
+  }
+
+  // نقل حلقة لأعلى أو لأسفل | Move episode up/down
+  async function moveEpisode(episode, direction, podcastEpisodes) {
+    const sorted = [...podcastEpisodes].sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+    const idx = sorted.findIndex((e) => e.id === episode.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+    const numA = sorted[idx].episode_number;
+    const numB = sorted[swapIdx].episode_number;
+    await Promise.all([
+      episodesAPI.update(sorted[idx].id, { episode_number: numB }),
+      episodesAPI.update(sorted[swapIdx].id, { episode_number: numA }),
+    ]);
+    await fetchAll();
+  }
+
+  async function handleDeletePodcast(id) {
     if (!window.confirm('هل أنت متأكد من حذف هذا البودكاست وجميع حلقاته؟')) return;
-    try {
-      await podcastsAPI.delete(podcastId);
-      await fetchAllPodcasts();
-    } catch (err) {
-      setError(err.response?.data?.message || 'فشل في حذف البودكاست');
-    }
+    try { await podcastsAPI.delete(id); await fetchAll(); await fetchStats(); }
+    catch (err) { setError(err.response?.data?.message || 'فشل'); }
   }
 
-  async function handleDeleteEpisode(episodeId) {
+  async function handleDeleteEpisode(id) {
     if (!window.confirm('هل أنت متأكد من حذف هذه الحلقة؟')) return;
-    try {
-      await episodesAPI.delete(episodeId);
-      await fetchAllPodcasts();
-    } catch (err) {
-      setError(err.response?.data?.message || 'فشل في حذف الحلقة');
-    }
+    try { await episodesAPI.delete(id); await fetchAll(); await fetchStats(); }
+    catch (err) { setError(err.response?.data?.message || 'فشل'); }
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" /></div>;
   }
+
+  const inputClass = "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none";
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* رأس لوحة التحكم | Dashboard Header */}
-      <div className="bg-gray-800 text-white rounded-xl p-6 mb-8">
+      {/* رأس لوحة التحكم | Header */}
+      <div className="bg-gray-800 text-white rounded-xl p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">لوحة تحكم المشرف</h1>
-            <p className="text-gray-300 text-sm mt-1">مرحباً {user?.username} - إدارة المنصة</p>
+            <p className="text-gray-300 text-sm mt-1">مرحباً {user?.username}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full">
-              مشرف
-            </span>
-            <button
-              onClick={onLogout}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              تسجيل خروج
-            </button>
+            <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full">مشرف</span>
+            <button onClick={onLogout} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">خروج</button>
           </div>
         </div>
 
-        {/* إحصائيات سريعة | Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="bg-gray-700 rounded-lg p-4">
-            <p className="text-gray-400 text-sm">عدد البودكاست</p>
-            <p className="text-2xl font-bold">{podcasts.length}</p>
+        {/* إحصائيات | Stats Summary */}
+        {stats && (
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="bg-gray-700 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">عدد البودكاست</p>
+              <p className="text-2xl font-bold">{stats.total_podcasts}</p>
+            </div>
+            <div className="bg-gray-700 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">عدد الحلقات</p>
+              <p className="text-2xl font-bold">{stats.total_episodes}</p>
+            </div>
           </div>
-          <div className="bg-gray-700 rounded-lg p-4">
-            <p className="text-gray-400 text-sm">عدد الحلقات</p>
-            <p className="text-2xl font-bold">
-              {podcasts.reduce((sum, p) => sum + (p.episodes?.length || 0), 0)}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* زر إضافة بودكاست | Add Podcast Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-800">إدارة البودكاست</h2>
-        <button
-          onClick={() => setShowPodcastForm(!showPodcastForm)}
-          className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          + بودكاست جديد
+      {/* التبويبات | Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button onClick={() => setTab('podcasts')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'podcasts' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+          إدارة المحتوى
+        </button>
+        <button onClick={() => setTab('stats')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'stats' ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+          الإحصائيات
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
-          {error}
-          <button onClick={() => setError('')} className="float-left text-red-400 hover:text-red-600">&times;</button>
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg mb-4 text-sm">
+          {error}<button onClick={() => setError('')} className="float-left">&times;</button>
         </div>
       )}
 
-      {/* نموذج إنشاء بودكاست | Create Podcast Form */}
-      {showPodcastForm && (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h3 className="text-lg font-bold mb-4">إنشاء بودكاست جديد</h3>
-          <form onSubmit={handleCreatePodcast} className="space-y-4">
-            <input
-              type="text"
-              placeholder="عنوان البودكاست"
-              value={podcastForm.title}
-              onChange={(e) => setPodcastForm({ ...podcastForm, title: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-              required
-            />
-            <textarea
-              placeholder="وصف البودكاست"
-              value={podcastForm.description}
-              onChange={(e) => setPodcastForm({ ...podcastForm, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-              rows={3}
-            />
-            <input
-              type="url"
-              placeholder="رابط صورة الغلاف (اختياري)"
-              value={podcastForm.cover_image_url}
-              onChange={(e) => setPodcastForm({ ...podcastForm, cover_image_url: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-            />
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {submitting ? 'جاري الإنشاء...' : 'إنشاء'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPodcastForm(false)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-colors"
-              >
-                إلغاء
-              </button>
+      {/* تبويب الإحصائيات | Stats Tab */}
+      {tab === 'stats' && stats && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">أكثر البودكاست استماعاً</h2>
+          {stats.top_podcasts?.length > 0 ? (
+            <div className="space-y-3">
+              {stats.top_podcasts.map((p, i) => (
+                <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold">{i + 1}</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-100">{p.title}</span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{p.total_listens} استماع</span>
+                </div>
+              ))}
             </div>
-          </form>
+          ) : <p className="text-gray-500 dark:text-gray-400 text-center py-4">لا توجد بيانات بعد</p>}
         </div>
       )}
 
-      {/* قائمة البودكاست | Podcasts List */}
-      {podcasts.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center text-gray-500">
-          <p className="text-lg mb-2">لا يوجد بودكاست في المنصة بعد</p>
-          <p>أضف أول بودكاست بالضغط على الزر أعلاه</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {podcasts.map((podcast) => (
-            <div key={podcast.id} className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {/* رأس البودكاست | Podcast Header */}
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">{podcast.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {podcast.creator?.username && (
-                        <span className="text-primary-600">{podcast.creator.username}</span>
-                      )}
-                      {' - '}
-                      {podcast.episodes?.length || 0} حلقة
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setShowEpisodeForm(showEpisodeForm === podcast.id ? null : podcast.id);
-                        setEpisodeForm({ title: '', description: '', episode_number: '', audio: null });
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
-                    >
-                      + حلقة
-                    </button>
-                    <button
-                      onClick={() => handleDeletePodcast(podcast.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
-                    >
-                      حذف
-                    </button>
-                  </div>
-                </div>
-              </div>
+      {/* تبويب إدارة المحتوى | Content Tab */}
+      {tab === 'podcasts' && (
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">إدارة البودكاست</h2>
+            <button onClick={() => { setShowPodcastForm(!showPodcastForm); setEditingPodcast(null); setPodcastForm({ title: '', description: '', cover_image_url: '', category_id: '' }); setCoverFile(null); }}
+              className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">+ بودكاست جديد</button>
+          </div>
 
-              {/* نموذج إضافة حلقة | Add Episode Form */}
-              {showEpisodeForm === podcast.id && (
-                <div className="p-6 bg-gray-50 border-b border-gray-100">
-                  <h4 className="font-bold mb-3">إضافة حلقة جديدة</h4>
-                  <form onSubmit={handleCreateEpisode} className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="عنوان الحلقة"
-                      value={episodeForm.title}
-                      onChange={(e) => setEpisodeForm({ ...episodeForm, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                      required
-                    />
-                    <textarea
-                      placeholder="وصف الحلقة"
-                      value={episodeForm.description}
-                      onChange={(e) => setEpisodeForm({ ...episodeForm, description: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                      rows={2}
-                    />
-                    <input
-                      type="number"
-                      placeholder="رقم الحلقة"
-                      value={episodeForm.episode_number}
-                      onChange={(e) => setEpisodeForm({ ...episodeForm, episode_number: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                      min="1"
-                    />
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">الملف الصوتي</label>
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={(e) => setEpisodeForm({ ...episodeForm, audio: e.target.files[0] })}
-                        className="w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        {submitting ? 'جاري الرفع...' : 'إضافة الحلقة'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowEpisodeForm(null)}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-colors"
-                      >
-                        إلغاء
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
+          {/* نموذج البودكاست | Podcast Form */}
+          {showPodcastForm && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{editingPodcast ? 'تعديل البودكاست' : 'إنشاء بودكاست جديد'}</h3>
+              <form onSubmit={handlePodcastSubmit} className="space-y-4">
+                <input type="text" placeholder="عنوان البودكاست" value={podcastForm.title}
+                  onChange={(e) => setPodcastForm({ ...podcastForm, title: e.target.value })} className={inputClass} required />
+                <textarea placeholder="وصف البودكاست" value={podcastForm.description}
+                  onChange={(e) => setPodcastForm({ ...podcastForm, description: e.target.value })} className={inputClass} rows={3} />
+                <select value={podcastForm.category_id}
+                  onChange={(e) => setPodcastForm({ ...podcastForm, category_id: e.target.value })} className={inputClass}>
+                  <option value="">اختر التصنيف</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
 
-              {/* قائمة الحلقات | Episodes List */}
-              {podcast.episodes && podcast.episodes.length > 0 && (
-                <div className="divide-y divide-gray-100">
-                  {podcast.episodes.map((episode) => (
-                    <div key={episode.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                {/* رفع صورة أو رابط | Image upload or URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">صورة الغلاف</label>
+                  <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files[0])}
+                    className="w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100" />
+                  <p className="text-xs text-gray-400 mt-1">أو أدخل رابط مباشر:</p>
+                  <input type="url" placeholder="رابط صورة الغلاف" value={podcastForm.cover_image_url}
+                    onChange={(e) => setPodcastForm({ ...podcastForm, cover_image_url: e.target.value })} className={inputClass + ' mt-1'} />
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="submit" disabled={submitting}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg disabled:opacity-50">{submitting ? 'جاري الحفظ...' : (editingPodcast ? 'حفظ التعديلات' : 'إنشاء')}</button>
+                  <button type="button" onClick={() => { setShowPodcastForm(false); setEditingPodcast(null); }}
+                    className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg">إلغاء</button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* قائمة البودكاست | Podcasts List */}
+          {podcasts.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center text-gray-500 dark:text-gray-400">
+              <p className="text-lg mb-2">لا يوجد بودكاست في المنصة بعد</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {podcasts.map((podcast) => (
+                <div key={podcast.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-800">
-                          {episode.episode_number && `${episode.episode_number}. `}
-                          {episode.title}
-                        </h4>
-                        {episode.description && (
-                          <p className="text-sm text-gray-500 line-clamp-1">{episode.description}</p>
-                        )}
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{podcast.title}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {podcast.category?.name && <span className="text-primary-500">{podcast.category.name}</span>}
+                          {' - '}{podcast.episodes?.length || 0} حلقة
+                        </p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteEpisode(episode.id)}
-                        className="text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded hover:bg-red-50 transition-colors"
-                      >
-                        حذف
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => startEditPodcast(podcast)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm">تعديل</button>
+                        <button onClick={() => {
+                          setShowEpisodeForm(showEpisodeForm === podcast.id ? null : podcast.id);
+                          setEditingEpisode(null);
+                          setEpisodeForm({ title: '', description: '', episode_number: '', audio: null, scheduled_at: '' });
+                        }} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm">+ حلقة</button>
+                        <button onClick={() => handleDeletePodcast(podcast.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm">حذف</button>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* نموذج الحلقة | Episode Form */}
+                  {showEpisodeForm === podcast.id && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-3">{editingEpisode ? 'تعديل الحلقة' : 'إضافة حلقة جديدة'}</h4>
+                      <form onSubmit={handleEpisodeSubmit} className="space-y-3">
+                        <input type="text" placeholder="عنوان الحلقة" value={episodeForm.title}
+                          onChange={(e) => setEpisodeForm({ ...episodeForm, title: e.target.value })} className={inputClass} required />
+                        <textarea placeholder="وصف الحلقة" value={episodeForm.description}
+                          onChange={(e) => setEpisodeForm({ ...episodeForm, description: e.target.value })} className={inputClass} rows={2} />
+                        <div className="grid grid-cols-2 gap-3">
+                          <input type="number" placeholder="رقم الحلقة" value={episodeForm.episode_number}
+                            onChange={(e) => setEpisodeForm({ ...episodeForm, episode_number: e.target.value })} className={inputClass} min="1" />
+                          <input type="datetime-local" value={episodeForm.scheduled_at ? episodeForm.scheduled_at.slice(0, 16) : ''}
+                            onChange={(e) => setEpisodeForm({ ...episodeForm, scheduled_at: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                            className={inputClass} title="جدولة النشر (اختياري)" />
+                        </div>
+                        {!editingEpisode && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الملف الصوتي</label>
+                            <input type="file" accept="audio/*" onChange={(e) => setEpisodeForm({ ...episodeForm, audio: e.target.files[0] })}
+                              className="w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-primary-50 file:text-primary-700" required />
+                          </div>
+                        )}
+                        <div className="flex gap-3">
+                          <button type="submit" disabled={submitting}
+                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg disabled:opacity-50">
+                            {submitting ? 'جاري الحفظ...' : (editingEpisode ? 'حفظ التعديلات' : 'إضافة الحلقة')}
+                          </button>
+                          <button type="button" onClick={() => { setShowEpisodeForm(null); setEditingEpisode(null); }}
+                            className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg">إلغاء</button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* قائمة الحلقات | Episodes */}
+                  {podcast.episodes && podcast.episodes.length > 0 && (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {[...podcast.episodes].sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0)).map((ep) => (
+                        <div key={ep.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-gray-800 dark:text-gray-100 truncate">
+                              {ep.episode_number && `${ep.episode_number}. `}{ep.title}
+                            </h4>
+                            <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                              {ep.listen_count > 0 && <span>{ep.listen_count} استماع</span>}
+                              {ep.scheduled_at && new Date(ep.scheduled_at) > new Date() && (
+                                <span className="text-yellow-500">مجدولة: {new Date(ep.scheduled_at).toLocaleDateString('ar')}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => moveEpisode(ep, 'up', podcast.episodes)} className="p-1 text-gray-400 hover:text-gray-600" title="نقل لأعلى">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>
+                            </button>
+                            <button onClick={() => moveEpisode(ep, 'down', podcast.episodes)} className="p-1 text-gray-400 hover:text-gray-600" title="نقل لأسفل">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                            </button>
+                            <button onClick={() => startEditEpisode(ep, podcast.id)}
+                              className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30">تعديل</button>
+                            <button onClick={() => handleDeleteEpisode(ep.id)}
+                              className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">حذف</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

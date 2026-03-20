@@ -1,9 +1,8 @@
 -- ============================================
 -- هجرة قاعدة البيانات | Database Migration
--- منصة البودكاست | Podcast Platform
+-- منصة البودكاست | Podcast Platform v2
 -- ============================================
 
--- تفعيل uuid | Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
@@ -20,6 +19,30 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ============================================
+-- جدول التصنيفات | Categories Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS categories (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- إضافة التصنيفات الافتراضية | Default categories
+INSERT INTO categories (name, slug) VALUES
+  ('تقنية', 'technology'),
+  ('ثقافة', 'culture'),
+  ('رياضة', 'sports'),
+  ('أعمال', 'business'),
+  ('تعليم', 'education'),
+  ('ترفيه', 'entertainment'),
+  ('أخبار', 'news'),
+  ('صحة', 'health'),
+  ('دين', 'religion'),
+  ('عام', 'general')
+ON CONFLICT (slug) DO NOTHING;
+
+-- ============================================
 -- جدول البودكاست | Podcasts Table
 -- ============================================
 CREATE TABLE IF NOT EXISTS podcasts (
@@ -27,6 +50,7 @@ CREATE TABLE IF NOT EXISTS podcasts (
   title TEXT NOT NULL,
   description TEXT,
   cover_image_url TEXT,
+  category_id UUID REFERENCES categories(id),
   creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -43,7 +67,9 @@ CREATE TABLE IF NOT EXISTS episodes (
   audio_file_url TEXT NOT NULL,
   duration_seconds INTEGER,
   episode_number INTEGER,
+  listen_count INTEGER DEFAULT 0,
   published_at TIMESTAMP WITH TIME ZONE,
+  scheduled_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -52,7 +78,9 @@ CREATE TABLE IF NOT EXISTS episodes (
 -- الفهارس | Indexes
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_podcasts_creator_id ON podcasts(creator_id);
+CREATE INDEX IF NOT EXISTS idx_podcasts_category_id ON podcasts(category_id);
 CREATE INDEX IF NOT EXISTS idx_episodes_podcast_id ON episodes(podcast_id);
+CREATE INDEX IF NOT EXISTS idx_episodes_published_at ON episodes(published_at);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- ============================================
@@ -61,47 +89,25 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE podcasts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
--- سياسة القراءة العامة للبودكاست | Public read for podcasts
-CREATE POLICY "podcasts_public_read" ON podcasts
-  FOR SELECT USING (true);
+CREATE POLICY "public_read" ON categories FOR SELECT USING (true);
+CREATE POLICY "podcasts_public_read" ON podcasts FOR SELECT USING (true);
+CREATE POLICY "episodes_public_read" ON episodes FOR SELECT USING (true);
+CREATE POLICY "users_public_read" ON users FOR SELECT USING (true);
 
--- سياسة القراءة العامة للحلقات | Public read for episodes
-CREATE POLICY "episodes_public_read" ON episodes
-  FOR SELECT USING (true);
-
--- سياسة القراءة العامة لأسماء المستخدمين | Public read for usernames
-CREATE POLICY "users_public_read" ON users
-  FOR SELECT USING (true);
-
--- سياسة الكتابة للمستخدمين المسجلين | Write policy for authenticated
-CREATE POLICY "podcasts_insert" ON podcasts
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "podcasts_update" ON podcasts
-  FOR UPDATE USING (true);
-
-CREATE POLICY "podcasts_delete" ON podcasts
-  FOR DELETE USING (true);
-
-CREATE POLICY "episodes_insert" ON episodes
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "episodes_update" ON episodes
-  FOR UPDATE USING (true);
-
-CREATE POLICY "episodes_delete" ON episodes
-  FOR DELETE USING (true);
-
-CREATE POLICY "users_insert" ON users
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "users_update" ON users
-  FOR UPDATE USING (true);
+CREATE POLICY "podcasts_insert" ON podcasts FOR INSERT WITH CHECK (true);
+CREATE POLICY "podcasts_update" ON podcasts FOR UPDATE USING (true);
+CREATE POLICY "podcasts_delete" ON podcasts FOR DELETE USING (true);
+CREATE POLICY "episodes_insert" ON episodes FOR INSERT WITH CHECK (true);
+CREATE POLICY "episodes_update" ON episodes FOR UPDATE USING (true);
+CREATE POLICY "episodes_delete" ON episodes FOR DELETE USING (true);
+CREATE POLICY "users_insert" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "users_update" ON users FOR UPDATE USING (true);
 
 -- ============================================
--- إنشاء Bucket للملفات الصوتية | Create Storage Bucket
--- يتم تنفيذ هذا من لوحة تحكم Supabase
--- Run this from Supabase dashboard:
+-- إنشاء Buckets للتخزين | Create Storage Buckets
+-- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-covers', 'podcast-covers', true);
 -- ============================================
