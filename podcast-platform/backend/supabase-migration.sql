@@ -97,6 +97,24 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 );
 
 -- ============================================
+-- جدول الإعجابات | Likes Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS likes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('like', 'dislike')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(episode_id, user_id)
+);
+
+-- إضافة عمود النص المكتوب للحلقات | Add transcript column
+ALTER TABLE episodes ADD COLUMN IF NOT EXISTS transcript TEXT;
+
+-- إضافة عمود الحظر | Add ban column
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;
+
+-- ============================================
 -- الفهارس | Indexes
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_podcasts_creator_id ON podcasts(creator_id);
@@ -106,6 +124,8 @@ CREATE INDEX IF NOT EXISTS idx_episodes_published_at ON episodes(published_at);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_comments_episode_id ON comments(episode_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_likes_episode_id ON likes(episode_id);
+CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id);
 
 -- ============================================
 -- سياسات أمان الصفوف (RLS) | Row Level Security
@@ -116,6 +136,7 @@ ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "public_read" ON categories FOR SELECT USING (true);
 CREATE POLICY "podcasts_public_read" ON podcasts FOR SELECT USING (true);
@@ -135,6 +156,9 @@ CREATE POLICY "comments_insert" ON comments FOR INSERT WITH CHECK (true);
 CREATE POLICY "comments_delete" ON comments FOR DELETE USING (true);
 CREATE POLICY "activity_logs_read" ON activity_logs FOR SELECT USING (true);
 CREATE POLICY "activity_logs_insert" ON activity_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "likes_public_read" ON likes FOR SELECT USING (true);
+CREATE POLICY "likes_insert" ON likes FOR INSERT WITH CHECK (true);
+CREATE POLICY "likes_delete" ON likes FOR DELETE USING (true);
 
 -- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets

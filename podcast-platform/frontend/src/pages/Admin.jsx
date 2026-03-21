@@ -1,6 +1,6 @@
 // ============================================
 // صفحة المشرف | Admin Page
-// مع رسوم بيانية + تصدير + سجل النشاطات
+// مع إدارة مستخدمين + نسخ احتياطي + رسوم بيانية
 // ============================================
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -66,6 +66,11 @@ function AdminDashboard({ user, onLogout }) {
   const [error, setError] = useState('');
   const [tab, setTab] = useState('podcasts');
 
+  // المستخدمين | Users
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+
   const [showPodcastForm, setShowPodcastForm] = useState(false);
   const [editingPodcast, setEditingPodcast] = useState(null);
   const [podcastForm, setPodcastForm] = useState({ title: '', description: '', cover_image_url: '', category_id: '' });
@@ -99,7 +104,20 @@ function AdminDashboard({ user, onLogout }) {
     try { const { data } = await adminAPI.getActivityLogs({ limit: 20 }); setActivityLogs(data.logs || []); } catch {}
   }, []);
 
+  const fetchUsers = useCallback(async (search = '') => {
+    setUsersLoading(true);
+    try {
+      const { data } = await adminAPI.getUsers({ search, limit: 50 });
+      setUsers(data.users || []);
+    } catch {}
+    finally { setUsersLoading(false); }
+  }, []);
+
   useEffect(() => { fetchAll(); fetchStats(); fetchLogs(); }, [fetchAll, fetchStats, fetchLogs]);
+
+  useEffect(() => {
+    if (tab === 'users') fetchUsers(userSearch);
+  }, [tab, userSearch, fetchUsers]);
 
   async function uploadCover() {
     if (!coverFile) return podcastForm.cover_image_url;
@@ -179,7 +197,6 @@ function AdminDashboard({ user, onLogout }) {
     catch (err) { toast.error(err.response?.data?.message || 'فشل'); }
   }
 
-  // تصدير | Export
   const handleExport = async (format) => {
     try {
       const { data } = await adminAPI.exportData(format);
@@ -198,11 +215,49 @@ function AdminDashboard({ user, onLogout }) {
     } catch { toast.error('فشل في تصدير البيانات'); }
   };
 
+  // نسخ احتياطي | Backup
+  const handleBackup = async () => {
+    try {
+      const { data } = await adminAPI.downloadBackup();
+      const blob = data instanceof Blob ? data : new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `podcast-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('تم تحميل النسخة الاحتياطية');
+    } catch {
+      toast.error('فشل في تحميل النسخة الاحتياطية');
+    }
+  };
+
+  // حظر/إلغاء حظر | Ban/Unban
+  const handleToggleBan = async (userId) => {
+    try {
+      const { data } = await adminAPI.toggleBan(userId);
+      toast.success(data.message);
+      fetchUsers(userSearch);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'فشل');
+    }
+  };
+
+  // تغيير الدور | Change role
+  const handleChangeRole = async (userId, newRole) => {
+    try {
+      const { data } = await adminAPI.changeRole(userId, newRole);
+      toast.success(data.message);
+      fetchUsers(userSearch);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'فشل');
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" /></div>;
 
   const inputClass = "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none";
 
-  // حساب بيانات الرسم البياني | Chart data
   const chartData = stats?.top_podcasts || [];
   const maxListens = Math.max(...chartData.map((p) => p.total_listens), 1);
 
@@ -216,6 +271,12 @@ function AdminDashboard({ user, onLogout }) {
             <p className="text-gray-300 text-sm mt-1">مرحباً {user?.username}</p>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={handleBackup} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors" title="نسخ احتياطي">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              نسخ احتياطي
+            </button>
             <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full">مشرف</span>
             <button onClick={onLogout} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">خروج</button>
           </div>
@@ -230,10 +291,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'logs'].map((t) => (
+        {['podcasts', 'stats', 'users', 'logs'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', logs: 'سجل النشاطات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
           </button>
         ))}
       </div>
@@ -244,10 +305,78 @@ function AdminDashboard({ user, onLogout }) {
         </div>
       )}
 
+      {/* Users Tab */}
+      {tab === 'users' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">إدارة المستخدمين</h2>
+            <input
+              type="text"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="بحث بالاسم أو البريد..."
+              className="text-sm px-3 py-1.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg outline-none focus:ring-1 focus:ring-primary-500 w-60"
+            />
+          </div>
+          {usersLoading ? (
+            <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto" /></div>
+          ) : users.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">لا يوجد مستخدمين</p>
+          ) : (
+            <div className="space-y-3 max-h-[500px] overflow-y-auto">
+              {users.map((u) => (
+                <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                  u.is_banned ? 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700'
+                }`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-sm font-bold text-primary-600 dark:text-primary-400 flex-shrink-0">
+                      {(u.username || '?')[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        {u.username}
+                        {u.is_banned && <span className="text-red-500 text-xs mr-1">(محظور)</span>}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      u.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {u.role === 'admin' ? 'مشرف' : 'مستمع'}
+                    </span>
+                    {u.id !== user.id && (
+                      <>
+                        <button
+                          onClick={() => handleChangeRole(u.id, u.role === 'admin' ? 'listener' : 'admin')}
+                          className="text-xs px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                          {u.role === 'admin' ? 'تخفيض' : 'ترقية'}
+                        </button>
+                        <button
+                          onClick={() => handleToggleBan(u.id)}
+                          className={`text-xs px-2 py-1 rounded transition-colors ${
+                            u.is_banned
+                              ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100'
+                              : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100'
+                          }`}
+                        >
+                          {u.is_banned ? 'إلغاء الحظر' : 'حظر'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats Tab with Charts */}
       {tab === 'stats' && (
         <div className="space-y-6">
-          {/* رسم بياني أفقي | Horizontal Bar Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">أكثر البودكاست استماعاً</h2>

@@ -1,10 +1,13 @@
 // ============================================
 // التطبيق الرئيسي | Main App Component
+// مع ثيمات متعددة + مشغل مصغر
 // ============================================
+import { useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { usePlayer } from './context/PlayerContext';
 import GlobalPlayer from './components/GlobalPlayer';
+import MiniPlayer from './components/MiniPlayer';
 import Home from './pages/Home';
 import PodcastDetail from './pages/PodcastDetail';
 import About from './pages/About';
@@ -13,8 +16,9 @@ import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
 
 export default function App() {
-  const { dark, toggleTheme } = useTheme();
+  const { dark, toggleTheme, colorTheme, changeColorTheme, themes } = useTheme();
   const { currentEpisode } = usePlayer();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -38,17 +42,57 @@ export default function App() {
               عن المنصة
             </Link>
 
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              title={dark ? 'الوضع الفاتح' : 'الوضع الليلي'}
-            >
-              {dark ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+            {/* اختيار الثيم | Theme Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowThemeMenu(!showThemeMenu)}
+                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="تغيير الثيم"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0 1 12 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 0 0-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 0 1 2.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/>
+                  <circle cx="6.5" cy="11.5" r="1.5"/>
+                  <circle cx="9.5" cy="7.5" r="1.5"/>
+                  <circle cx="14.5" cy="7.5" r="1.5"/>
+                  <circle cx="17.5" cy="11.5" r="1.5"/>
+                </svg>
+              </button>
+              {showThemeMenu && (
+                <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border dark:border-gray-700 p-3 z-50 min-w-[180px]">
+                  <p className="text-xs text-gray-400 mb-2">اختر اللون</p>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {Object.entries(themes).map(([key, theme]) => (
+                      <button
+                        key={key}
+                        onClick={() => { changeColorTheme(key); }}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                          colorTheme === key ? 'border-gray-800 dark:border-white scale-110' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: theme.primary }}
+                        title={theme.name}
+                      />
+                    ))}
+                  </div>
+                  <hr className="border-gray-200 dark:border-gray-700 mb-2" />
+                  <button
+                    onClick={() => { toggleTheme(); setShowThemeMenu(false); }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    {dark ? (
+                      <>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg>
+                        الوضع الفاتح
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+                        الوضع الليلي
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -69,6 +113,7 @@ export default function App() {
       </footer>
 
       <GlobalPlayer />
+      <MiniPlayer />
     </div>
   );
 }

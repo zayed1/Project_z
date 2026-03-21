@@ -1,14 +1,20 @@
 // ============================================
 // صفحة تفاصيل البودكاست | Podcast Detail Page
-// مع تحميل + مشاركة سوشال + تعليقات
+// مع إعجاب + نص مكتوب + بحث + QR + مقترحات
 // ============================================
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { podcastsAPI, commentsAPI } from '../utils/api';
+import { podcastsAPI, commentsAPI, episodesAPI } from '../utils/api';
 import { usePlayer } from '../context/PlayerContext';
 import { useToast } from '../context/ToastContext';
 import { isInListenLater, addToListenLater, removeFromListenLater } from '../utils/listenLater';
+import { useSwipe } from '../components/SwipeHandler';
+import LikeDislike from '../components/LikeDislike';
+import TranscriptViewer from '../components/TranscriptViewer';
+import SuggestedPodcasts from '../components/SuggestedPodcasts';
+import QRCode from '../components/QRCode';
+import { DetailSkeleton, EpisodeSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
   const { id } = useParams();
@@ -19,12 +25,23 @@ export default function PodcastDetail() {
   const [error, setError] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
   const [listenLaterIds, setListenLaterIds] = useState(new Set());
+  const [expandedTranscript, setExpandedTranscript] = useState({});
+
+  // بحث في الحلقات | Episode search
+  const [episodeSearch, setEpisodeSearch] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searching, setSearching] = useState(false);
 
   // التعليقات | Comments
   const [comments, setComments] = useState({});
   const [commentInput, setCommentInput] = useState({});
   const [showComments, setShowComments] = useState({});
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  // سحب للتنقل | Swipe navigation
+  const swipeHandlers = useSwipe({
+    onSwipeRight: () => window.history.back(),
+  });
 
   useEffect(() => {
     async function fetch() {
@@ -42,7 +59,26 @@ export default function PodcastDetail() {
       }
     }
     fetch();
+    setSearchResults(null);
+    setEpisodeSearch('');
   }, [id]);
+
+  // بحث في الحلقات | Search episodes
+  useEffect(() => {
+    if (!episodeSearch || episodeSearch.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { data } = await episodesAPI.search(id, episodeSearch);
+        setSearchResults(data.episodes || []);
+      } catch { setSearchResults([]); }
+      finally { setSearching(false); }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [episodeSearch, id]);
 
   const toggleListenLater = (episode) => {
     if (listenLaterIds.has(episode.id)) {
@@ -56,7 +92,6 @@ export default function PodcastDetail() {
     }
   };
 
-  // مشاركة على السوشال | Social share
   const shareUrl = `${window.location.origin}/podcast/${id}`;
 
   const socialShare = (platform) => {
@@ -74,7 +109,6 @@ export default function PodcastDetail() {
     toast.success('تم نسخ الرابط');
   };
 
-  // تحميل الحلقة | Download episode
   const downloadEpisode = (episode) => {
     const a = document.createElement('a');
     a.href = episode.audio_file_url;
@@ -86,7 +120,6 @@ export default function PodcastDetail() {
     toast.info('جاري تحميل الحلقة...');
   };
 
-  // تعليقات | Comments
   const toggleComments = async (episodeId) => {
     const isOpen = showComments[episodeId];
     setShowComments((prev) => ({ ...prev, [episodeId]: !isOpen }));
@@ -118,13 +151,7 @@ export default function PodcastDetail() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
-      </div>
-    );
-  }
+  if (loading) return <DetailSkeleton />;
 
   if (error || !podcast) {
     return (
@@ -135,16 +162,18 @@ export default function PodcastDetail() {
     );
   }
 
-  const sortedEpisodes = [...(podcast.episodes || [])].sort((a, b) => {
+  const allEpisodes = [...(podcast.episodes || [])].sort((a, b) => {
     const diff = (a.episode_number || 0) - (b.episode_number || 0);
     return sortAsc ? diff : -diff;
   });
+
+  const displayEpisodes = searchResults !== null ? searchResults : allEpisodes;
 
   const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
   const rssUrl = `${apiBase}/rss/${podcast.id}`;
 
   return (
-    <div className="max-w-4xl mx-auto pb-24">
+    <div className="max-w-4xl mx-auto pb-24" {...swipeHandlers}>
       <Helmet>
         <title>{podcast.title} - منصة البودكاست</title>
         <meta name="description" content={podcast.description || podcast.title} />
@@ -200,6 +229,7 @@ export default function PodcastDetail() {
                 <button onClick={copyLink} className="text-gray-400 hover:text-primary-500" title="نسخ الرابط">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 </button>
+                <QRCode url={shareUrl} />
               </div>
             </div>
           </div>
@@ -208,20 +238,50 @@ export default function PodcastDetail() {
 
       {/* قائمة الحلقات | Episodes List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">الحلقات</h2>
-          <button onClick={() => setSortAsc(!sortAsc)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 flex items-center gap-1">
-            {sortAsc ? 'الأقدم أولاً' : 'الأحدث أولاً'}
-            <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* بحث في الحلقات | Episode Search */}
+            <div className="relative">
+              <input
+                type="text"
+                value={episodeSearch}
+                onChange={(e) => setEpisodeSearch(e.target.value)}
+                placeholder="ابحث في الحلقات..."
+                className="text-sm px-3 py-1.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg outline-none focus:ring-1 focus:ring-primary-500 w-40"
+              />
+              {searching && (
+                <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin w-3 h-3 border border-primary-500 border-t-transparent rounded-full" />
+                </div>
+              )}
+            </div>
+            <button onClick={() => setSortAsc(!sortAsc)}
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 flex items-center gap-1">
+              {sortAsc ? 'الأقدم أولاً' : 'الأحدث أولاً'}
+              <svg className={`w-4 h-4 transition-transform ${sortAsc ? '' : 'rotate-180'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+          </div>
         </div>
 
-        {sortedEpisodes.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">لا توجد حلقات بعد</p>
+        {searchResults !== null && (
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              نتائج البحث: {searchResults.length} حلقة
+            </span>
+            <button onClick={() => { setEpisodeSearch(''); setSearchResults(null); }} className="text-xs text-primary-500 hover:underline">
+              إلغاء البحث
+            </button>
+          </div>
+        )}
+
+        {displayEpisodes.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            {searchResults !== null ? 'لا توجد نتائج' : 'لا توجد حلقات بعد'}
+          </p>
         ) : (
           <div className="space-y-2">
-            {sortedEpisodes.map((episode) => {
+            {displayEpisodes.map((episode) => {
               const active = currentEpisode?.id === episode.id;
               const epComments = comments[episode.id] || [];
               const isCommentsOpen = showComments[episode.id];
@@ -233,7 +293,7 @@ export default function PodcastDetail() {
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-3">
                       <button
-                        onClick={() => playEpisode(episode, podcast.title, sortedEpisodes)}
+                        onClick={() => playEpisode(episode, podcast.title, allEpisodes)}
                         className="flex items-center gap-3 flex-1 text-right min-w-0"
                       >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -257,6 +317,9 @@ export default function PodcastDetail() {
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {episode.listen_count > 0 && <span className="text-xs text-gray-400">{episode.listen_count}</span>}
+
+                        {/* إعجاب | Like/Dislike */}
+                        <LikeDislike episodeId={episode.id} />
 
                         {/* تحميل | Download */}
                         <button onClick={() => downloadEpisode(episode)}
@@ -282,6 +345,11 @@ export default function PodcastDetail() {
                         </button>
                       </div>
                     </div>
+
+                    {/* النص المكتوب | Transcript */}
+                    {episode.transcript && (
+                      <TranscriptViewer transcript={episode.transcript} />
+                    )}
                   </div>
 
                   {/* قسم التعليقات | Comments Section */}
@@ -329,6 +397,9 @@ export default function PodcastDetail() {
           </div>
         )}
       </div>
+
+      {/* بودكاست مقترحة | Suggested Podcasts */}
+      <SuggestedPodcasts podcastId={id} />
     </div>
   );
 }

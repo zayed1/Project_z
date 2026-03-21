@@ -60,6 +60,7 @@ export const episodesAPI = {
   update: (episodeId, data) => api.put(`/episodes/${episodeId}`, data),
   delete: (episodeId) => api.delete(`/episodes/${episodeId}`),
   recordListen: (episodeId) => api.post(`/episodes/${episodeId}/listen`),
+  search: (podcastId, q) => api.get(`/podcasts/${podcastId}/episodes/search`, { params: { q } }),
 };
 
 // التعليقات | Comments
@@ -69,10 +70,28 @@ export const commentsAPI = {
   delete: (commentId) => api.delete(`/comments/${commentId}`),
 };
 
+// الإعجابات | Likes
+export const likesAPI = {
+  get: (episodeId) => api.get(`/episodes/${episodeId}/likes`),
+  toggle: (episodeId, type) => api.post(`/episodes/${episodeId}/like`, { type }),
+  remove: (episodeId) => api.delete(`/episodes/${episodeId}/like`),
+};
+
+// الاكتشاف | Discover
+export const discoverAPI = {
+  suggested: (podcastId) => api.get(`/discover/suggested/${podcastId}`),
+  popular: () => api.get('/discover/popular'),
+  trending: () => api.get('/discover/trending'),
+};
+
 // المشرف | Admin
 export const adminAPI = {
   getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
   exportData: (format) => api.get('/admin/export', { params: { format }, responseType: format === 'csv' ? 'blob' : 'json' }),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  toggleBan: (userId) => api.put(`/admin/users/${userId}/ban`),
+  changeRole: (userId, role) => api.put(`/admin/users/${userId}/role`, { role }),
+  downloadBackup: () => api.get('/admin/backup', { responseType: 'blob' }),
 };
 
 export default api;

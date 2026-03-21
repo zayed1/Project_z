@@ -15,8 +15,14 @@ const episodeRoutes = require('./routes/episodes');
 const userRoutes = require('./routes/users');
 const commentRoutes = require('./routes/comments');
 const adminRoutes = require('./routes/admin');
+const likesRoutes = require('./routes/likes');
+const discoverRoutes = require('./routes/discover');
+const userManagementRoutes = require('./routes/userManagement');
 const rssRoutes = require('./routes/rss');
 const sitemapRoutes = require('./routes/sitemap');
+const { downloadBackup } = require('./controllers/backupController');
+const { authenticate } = require('./middleware/auth');
+const { requireAdmin } = require('./middleware/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +55,10 @@ app.use('/api', podcastRoutes);
 app.use('/api', episodeRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', likesRoutes);
+app.use('/api', discoverRoutes);
+app.use('/api', userManagementRoutes);
+app.get('/api/admin/backup', authenticate, requireAdmin, downloadBackup);
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 

@@ -1,12 +1,16 @@
 // ============================================
 // الصفحة الرئيسية | Home Page
-// مع Infinite Scroll + Autocomplete
+// مع Infinite Scroll + Autocomplete + Trending + Popular
 // ============================================
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { podcastsAPI } from '../utils/api';
 import PodcastCard from '../components/PodcastCard';
+import { PodcastCardSkeleton } from '../components/EnhancedSkeleton';
+import TrendingPodcasts from '../components/TrendingPodcasts';
+import PopularEpisodes from '../components/PopularEpisodes';
+import ListenerStats from '../components/ListenerStats';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -30,7 +34,6 @@ export default function Home() {
     podcastsAPI.getCategories().then(({ data }) => setCategories(data.categories || [])).catch(() => {});
   }, []);
 
-  // Autocomplete handler
   const handleInputChange = (value) => {
     setSearchInput(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -52,7 +55,6 @@ export default function Home() {
     }, 300);
   };
 
-  // إغلاق الاقتراحات عند النقر خارجاً | Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
@@ -61,7 +63,6 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // جلب البيانات | Fetch data
   useEffect(() => {
     async function fetchPodcasts() {
       setLoading(true);
@@ -83,7 +84,6 @@ export default function Home() {
     fetchPodcasts();
   }, [search, selectedCategory]);
 
-  // Infinite scroll - تحميل المزيد | Load more
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -102,7 +102,6 @@ export default function Home() {
     finally { setLoadingMore(false); }
   }, [page, hasMore, loadingMore, search, selectedCategory]);
 
-  // Intersection Observer للـ Infinite Scroll
   const observerRef = useRef(null);
   const lastCardRef = useCallback((node) => {
     if (loading || loadingMore) return;
@@ -132,7 +131,6 @@ export default function Home() {
           <h1 className="text-4xl font-bold mb-4">منصة البودكاست</h1>
           <p className="text-xl opacity-90 mb-6">اكتشف بودكاست جديدة واستمع إلى حلقاتك المفضلة</p>
 
-          {/* بحث مع Autocomplete */}
           <div className="max-w-lg mx-auto relative" ref={searchRef}>
             <form onSubmit={handleSearch} className="flex gap-2">
               <input
@@ -148,7 +146,6 @@ export default function Home() {
               </button>
             </form>
 
-            {/* اقتراحات البحث | Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 overflow-hidden z-10">
                 {suggestions.map((s) => (
@@ -177,6 +174,15 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* إحصائيات المستمع | Listener Stats */}
+      <ListenerStats />
+
+      {/* البودكاست الرائجة | Trending */}
+      {!search && !selectedCategory && <TrendingPodcasts />}
+
+      {/* الأكثر استماعاً | Popular */}
+      {!search && !selectedCategory && <PopularEpisodes />}
 
       {/* التصنيفات | Categories Filter */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -211,15 +217,7 @@ export default function Home() {
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden animate-pulse">
-              <div className="aspect-square bg-gray-300 dark:bg-gray-700" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
-              </div>
-            </div>
-          ))}
+          {[...Array(8)].map((_, i) => <PodcastCardSkeleton key={i} />)}
         </div>
       ) : podcasts.length === 0 ? (
         <div className="text-center py-16 text-gray-500 dark:text-gray-400">
@@ -237,15 +235,7 @@ export default function Home() {
           ))}
           {loadingMore && (
             <>
-              {[...Array(4)].map((_, i) => (
-                <div key={`skeleton-${i}`} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden animate-pulse">
-                  <div className="aspect-square bg-gray-300 dark:bg-gray-700" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
+              {[...Array(4)].map((_, i) => <PodcastCardSkeleton key={`skeleton-${i}`} />)}
             </>
           )}
         </div>
