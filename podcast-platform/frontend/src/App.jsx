@@ -13,6 +13,7 @@ import PodcastDetail from './pages/PodcastDetail';
 import About from './pages/About';
 import ListenLaterPage from './pages/ListenLaterPage';
 import Admin from './pages/Admin';
+import FollowsPage from './pages/FollowsPage';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -37,6 +38,12 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
               قائمتي
+            </Link>
+            <Link to="/follows" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              متابعاتي
             </Link>
             <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               عن المنصة
@@ -103,6 +110,7 @@ export default function App() {
           <Route path="/podcast/:id" element={<PodcastDetail />} />
           <Route path="/about" element={<About />} />
           <Route path="/listen-later" element={<ListenLaterPage />} />
+          <Route path="/follows" element={<FollowsPage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -108,6 +108,17 @@ CREATE TABLE IF NOT EXISTS likes (
   UNIQUE(episode_id, user_id)
 );
 
+-- ============================================
+-- جدول المتابعات | Follows Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS follows (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  podcast_id UUID NOT NULL REFERENCES podcasts(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, podcast_id)
+);
+
 -- إضافة عمود النص المكتوب للحلقات | Add transcript column
 ALTER TABLE episodes ADD COLUMN IF NOT EXISTS transcript TEXT;
 
@@ -126,6 +137,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_episode_id ON comments(episode_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_likes_episode_id ON likes(episode_id);
 CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_follows_user_id ON follows(user_id);
+CREATE INDEX IF NOT EXISTS idx_follows_podcast_id ON follows(podcast_id);
 
 -- ============================================
 -- سياسات أمان الصفوف (RLS) | Row Level Security
@@ -137,6 +150,7 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "public_read" ON categories FOR SELECT USING (true);
 CREATE POLICY "podcasts_public_read" ON podcasts FOR SELECT USING (true);
@@ -159,6 +173,9 @@ CREATE POLICY "activity_logs_insert" ON activity_logs FOR INSERT WITH CHECK (tru
 CREATE POLICY "likes_public_read" ON likes FOR SELECT USING (true);
 CREATE POLICY "likes_insert" ON likes FOR INSERT WITH CHECK (true);
 CREATE POLICY "likes_delete" ON likes FOR DELETE USING (true);
+CREATE POLICY "follows_public_read" ON follows FOR SELECT USING (true);
+CREATE POLICY "follows_insert" ON follows FOR INSERT WITH CHECK (true);
+CREATE POLICY "follows_delete" ON follows FOR DELETE USING (true);
 
 -- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets

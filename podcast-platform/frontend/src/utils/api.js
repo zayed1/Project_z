@@ -84,6 +84,19 @@ export const discoverAPI = {
   trending: () => api.get('/discover/trending'),
 };
 
+// المتابعة | Follows
+export const followsAPI = {
+  toggle: (podcastId) => api.post(`/podcasts/${podcastId}/follow`),
+  check: (podcastId) => api.get(`/podcasts/${podcastId}/follow/check`),
+  getMyFollows: () => api.get('/me/follows'),
+  getCount: (podcastId) => api.get(`/podcasts/${podcastId}/followers/count`),
+};
+
+// الشارات | Badges
+export const badgesAPI = {
+  getMyBadges: () => api.get('/me/badges'),
+};
+
 // المشرف | Admin
 export const adminAPI = {
   getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
@@ -92,6 +105,8 @@ export const adminAPI = {
   toggleBan: (userId) => api.put(`/admin/users/${userId}/ban`),
   changeRole: (userId, role) => api.put(`/admin/users/${userId}/role`, { role }),
   downloadBackup: () => api.get('/admin/backup', { responseType: 'blob' }),
+  importRSS: (rssUrl) => api.post('/admin/import-rss', { rss_url: rssUrl }),
+  getDetailedStats: () => api.get('/admin/detailed-stats'),
 };
 
 export default api;

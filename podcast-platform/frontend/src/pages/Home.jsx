@@ -11,6 +11,9 @@ import { PodcastCardSkeleton } from '../components/EnhancedSkeleton';
 import TrendingPodcasts from '../components/TrendingPodcasts';
 import PopularEpisodes from '../components/PopularEpisodes';
 import ListenerStats from '../components/ListenerStats';
+import BadgesDisplay from '../components/BadgesDisplay';
+import HeroCarousel from '../components/HeroCarousel';
+import VoiceSearch from '../components/VoiceSearch';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -125,55 +128,64 @@ export default function Home() {
         <meta name="description" content="اكتشف بودكاست جديدة واستمع إلى حلقاتك المفضلة على منصة البودكاست العربية" />
       </Helmet>
 
-      {/* البانر | Hero */}
-      <div className="bg-gradient-to-l from-primary-600 to-primary-800 text-white py-12 px-4 rounded-2xl mb-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl font-bold mb-4">منصة البودكاست</h1>
-          <p className="text-xl opacity-90 mb-6">اكتشف بودكاست جديدة واستمع إلى حلقاتك المفضلة</p>
-
-          <div className="max-w-lg mx-auto relative" ref={searchRef}>
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder="ابحث عن بودكاست..."
-                className="flex-1 px-4 py-2.5 rounded-lg text-gray-800 outline-none focus:ring-2 focus:ring-primary-300"
-              />
-              <button type="submit" className="bg-white text-primary-600 font-medium px-6 py-2.5 rounded-lg hover:bg-gray-100 transition-colors">
-                بحث
-              </button>
-            </form>
-
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 overflow-hidden z-10">
-                {suggestions.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      navigate(`/podcast/${s.id}`);
-                      setShowSuggestions(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    {s.cover_image_url ? (
-                      <img src={s.cover_image_url} alt="" className="w-8 h-8 rounded object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <svg className="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                        </svg>
-                      </div>
-                    )}
-                    <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{s.title}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+      {/* سلايدر البانر أو البانر العادي | Hero Carousel or Default Hero */}
+      {podcasts.length > 0 && !search && !selectedCategory ? (
+        <HeroCarousel podcasts={podcasts} />
+      ) : (
+        <div className="bg-gradient-to-l from-primary-600 to-primary-800 text-white py-12 px-4 rounded-2xl mb-8">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl font-bold mb-4">منصة البودكاست</h1>
+            <p className="text-xl opacity-90 mb-6">اكتشف بودكاست جديدة واستمع إلى حلقاتك المفضلة</p>
           </div>
         </div>
+      )}
+
+      {/* شريط البحث | Search Bar */}
+      <div className="max-w-lg mx-auto relative mb-8" ref={searchRef}>
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            placeholder="ابحث عن بودكاست..."
+            className="flex-1 px-4 py-2.5 rounded-lg text-gray-800 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary-300"
+          />
+          <VoiceSearch onResult={(text) => { setSearchInput(text); setSearch(text); }} />
+          <button type="submit" className="bg-primary-500 text-white font-medium px-6 py-2.5 rounded-lg hover:bg-primary-600 transition-colors">
+            بحث
+          </button>
+        </form>
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 overflow-hidden z-10">
+            {suggestions.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  navigate(`/podcast/${s.id}`);
+                  setShowSuggestions(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-right hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                {s.cover_image_url ? (
+                  <img src={s.cover_image_url} alt="" className="w-8 h-8 rounded object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    </svg>
+                  </div>
+                )}
+                <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{s.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* شارات الإنجازات | Badges */}
+      <BadgesDisplay />
 
       {/* إحصائيات المستمع | Listener Stats */}
       <ListenerStats />

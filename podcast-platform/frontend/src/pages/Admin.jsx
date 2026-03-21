@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { podcastsAPI, episodesAPI, adminAPI } from '../utils/api';
+import DragDropUpload from '../components/DragDropUpload';
 
 export default function Admin() {
   const { user, login, logout, loading: authLoading } = useAuth();
@@ -232,6 +233,39 @@ function AdminDashboard({ user, onLogout }) {
     }
   };
 
+  // استيراد RSS | RSS Import
+  const [rssUrl, setRssUrl] = useState('');
+  const [rssLoading, setRssLoading] = useState(false);
+
+  const handleRSSImport = async () => {
+    if (!rssUrl.trim()) return;
+    setRssLoading(true);
+    try {
+      const { data } = await adminAPI.importRSS(rssUrl.trim());
+      toast.success(data.message || 'تم استيراد البودكاست بنجاح');
+      setRssUrl('');
+      await fetchAll(); await fetchStats();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'فشل في استيراد RSS');
+    } finally {
+      setRssLoading(false);
+    }
+  };
+
+  // إحصائيات تفصيلية | Detailed Stats
+  const [detailedStats, setDetailedStats] = useState(null);
+  const [detailedLoading, setDetailedLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab === 'stats') {
+      setDetailedLoading(true);
+      adminAPI.getDetailedStats()
+        .then(({ data }) => setDetailedStats(data))
+        .catch(() => {})
+        .finally(() => setDetailedLoading(false));
+    }
+  }, [tab]);
+
   // حظر/إلغاء حظر | Ban/Unban
   const handleToggleBan = async (userId) => {
     try {
@@ -291,10 +325,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'users', 'logs'].map((t) => (
+        {['podcasts', 'stats', 'rss', 'users', 'logs'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', rss: 'استيراد RSS', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
           </button>
         ))}
       </div>
@@ -377,6 +411,65 @@ function AdminDashboard({ user, onLogout }) {
       {/* Stats Tab with Charts */}
       {tab === 'stats' && (
         <div className="space-y-6">
+          {/* إحصائيات تفصيلية | Detailed Stats */}
+          {detailedLoading ? (
+            <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto" /></div>
+          ) : detailedStats && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { label: 'المستخدمين', val: detailedStats.totals?.users, color: 'blue' },
+                  { label: 'البودكاست', val: detailedStats.totals?.podcasts, color: 'primary' },
+                  { label: 'الحلقات', val: detailedStats.totals?.episodes, color: 'green' },
+                  { label: 'التعليقات', val: detailedStats.totals?.comments, color: 'yellow' },
+                  { label: 'الإعجابات', val: detailedStats.totals?.likes, color: 'red' },
+                  { label: 'المتابعات', val: detailedStats.totals?.follows, color: 'purple' },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{s.label}</p>
+                    <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{s.val ?? 0}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* رسم بياني أسبوعي | Weekly Chart */}
+              {detailedStats.weeklyChart && detailedStats.weeklyChart.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">الاستماع خلال الأسبوع</h3>
+                  <div className="flex items-end gap-2 h-40">
+                    {(() => {
+                      const maxVal = Math.max(...detailedStats.weeklyChart.map((d) => d.count), 1);
+                      return detailedStats.weeklyChart.map((d) => (
+                        <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{d.count}</span>
+                          <div
+                            className="w-full bg-gradient-to-t from-primary-500 to-primary-400 rounded-t-lg transition-all duration-500"
+                            style={{ height: `${(d.count / maxVal) * 100}%`, minHeight: '4px' }}
+                          />
+                          <span className="text-xs text-gray-400">{new Date(d.date).toLocaleDateString('ar', { weekday: 'short' })}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* أفضل التصنيفات | Top Categories */}
+              {detailedStats.topCategories && detailedStats.topCategories.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">أفضل التصنيفات</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {detailedStats.topCategories.map((c) => (
+                      <span key={c.name} className="bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-3 py-1.5 rounded-full text-sm">
+                        {c.name} ({c.count})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">أكثر البودكاست استماعاً</h2>
@@ -408,6 +501,35 @@ function AdminDashboard({ user, onLogout }) {
             ) : (
               <p className="text-gray-500 dark:text-gray-400 text-center py-4">لا توجد بيانات بعد</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* RSS Import Tab */}
+      {tab === 'rss' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">استيراد من RSS خارجي</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">أدخل رابط RSS لاستيراد بودكاست وحلقاته تلقائياً</p>
+          <div className="flex gap-3">
+            <input
+              type="url"
+              value={rssUrl}
+              onChange={(e) => setRssUrl(e.target.value)}
+              placeholder="https://example.com/feed.xml"
+              className={inputClass + ' flex-1'}
+              dir="ltr"
+            />
+            <button
+              onClick={handleRSSImport}
+              disabled={rssLoading || !rssUrl.trim()}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              {rssLoading ? (
+                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> جاري الاستيراد...</>
+              ) : (
+                <><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg> استيراد</>
+              )}
+            </button>
           </div>
         </div>
       )}
@@ -522,11 +644,12 @@ function AdminDashboard({ user, onLogout }) {
                             className={inputClass} title="جدولة النشر (اختياري)" />
                         </div>
                         {!editingEpisode && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الملف الصوتي</label>
-                            <input type="file" accept="audio/*" onChange={(e) => setEpisodeForm({ ...episodeForm, audio: e.target.files[0] })}
-                              className="w-full text-sm text-gray-500 file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-primary-50 file:text-primary-700" required />
-                          </div>
+                          <DragDropUpload
+                            accept="audio/*"
+                            label="اسحب الملف الصوتي هنا أو اضغط للاختيار"
+                            icon="audio"
+                            onFile={(file) => setEpisodeForm({ ...episodeForm, audio: file })}
+                          />
                         )}
                         <div className="flex gap-3">
                           <button type="submit" disabled={submitting}

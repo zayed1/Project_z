@@ -1,11 +1,12 @@
 // ============================================
 // المشغل العام الثابت | Fixed Global Audio Player
-// مع أزرار التالي/السابق | With Next/Prev
+// مع مؤقت النوم + أزرار التالي/السابق
 // ============================================
 import { usePlayer } from '../context/PlayerContext';
 import { useState } from 'react';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+const SLEEP_OPTIONS = [15, 30, 45, 60, 90];
 
 function formatTime(s) {
   const mins = Math.floor(s / 60);
@@ -16,12 +17,13 @@ function formatTime(s) {
 export default function GlobalPlayer() {
   const {
     currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
-    hasNext, hasPrev,
+    hasNext, hasPrev, sleepTimer,
     togglePlay, seek, skipForward, skipBackward, changeSpeed,
-    playNext, playPrev,
+    playNext, playPrev, startSleepTimer, cancelSleepTimer,
   } = usePlayer();
 
   const [showSpeed, setShowSpeed] = useState(false);
+  const [showSleep, setShowSleep] = useState(false);
 
   if (!currentEpisode) return null;
 
@@ -58,7 +60,6 @@ export default function GlobalPlayer() {
 
           {/* أزرار التحكم | Controls */}
           <div className="flex items-center gap-2">
-            {/* السابقة | Previous */}
             <button onClick={playPrev} disabled={!hasPrev}
               className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-30" title="الحلقة السابقة">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
@@ -83,19 +84,58 @@ export default function GlobalPlayer() {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 3C6.85 3 2.92 6.03 1.55 10.16l1.8.67C4.47 7.33 7.72 5 11.5 5c2.9 0 5.47 1.38 7.12 3.5H15v2h6V4.5h-2v3.18C17.14 5.29 14.5 3 11.5 3zM18 13h-2v2h2v-2zm-3 0h-2v2h2v-2zm-3 0h-2v2h2v-2z"/></svg>
             </button>
 
-            {/* التالية | Next */}
             <button onClick={playNext} disabled={!hasNext}
               className="text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-30" title="الحلقة التالية">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
             </button>
           </div>
 
-          {/* الوقت والسرعة | Time & Speed */}
+          {/* الوقت والسرعة والنوم | Time, Speed & Sleep */}
           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
             <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+
+            {/* مؤقت النوم | Sleep Timer */}
             <div className="relative">
               <button
-                onClick={() => setShowSpeed(!showSpeed)}
+                onClick={() => { setShowSleep(!showSleep); setShowSpeed(false); }}
+                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  sleepTimer ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title="مؤقت النوم"
+              >
+                {sleepTimer ? `${sleepTimer}د` : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              {showSleep && (
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 shadow-lg rounded-lg border dark:border-gray-700 py-1 min-w-[80px]">
+                  {sleepTimer && (
+                    <button
+                      onClick={() => { cancelSleepTimer(); setShowSleep(false); }}
+                      className="block w-full text-center px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      إلغاء
+                    </button>
+                  )}
+                  {SLEEP_OPTIONS.map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => { startSleepTimer(m); setShowSleep(false); }}
+                      className={`block w-full text-center px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${sleepTimer === m ? 'text-primary-500 font-bold' : ''}`}
+                    >
+                      {m} دقيقة
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* السرعة | Speed */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowSpeed(!showSpeed); setShowSleep(false); }}
                 className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 {playbackRate}x

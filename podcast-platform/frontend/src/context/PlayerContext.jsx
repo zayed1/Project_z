@@ -1,6 +1,6 @@
 // ============================================
 // سياق مشغل الصوت العام | Global Audio Player Context
-// مع قائمة تشغيل | With Playlist Support
+// مع قائمة تشغيل + مؤقت النوم | With Playlist + Sleep Timer
 // ============================================
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import api from '../utils/api';
@@ -21,6 +21,10 @@ export function PlayerProvider({ children }) {
   const [playlist, setPlaylist] = useState([]);
   const [playlistIndex, setPlaylistIndex] = useState(-1);
 
+  // مؤقت النوم | Sleep Timer
+  const [sleepTimer, setSleepTimer] = useState(null); // minutes remaining
+  const sleepIntervalRef = useRef(null);
+
   const audio = audioRef.current;
 
   useEffect(() => {
@@ -33,7 +37,6 @@ export function PlayerProvider({ children }) {
     const onMeta = () => setDuration(audio.duration || 0);
     const onEnd = () => {
       setIsPlaying(false);
-      // تشغيل الحلقة التالية تلقائياً | Auto-play next
       if (playlist.length > 0 && playlistIndex < playlist.length - 1) {
         const nextIdx = playlistIndex + 1;
         const nextEp = playlist[nextIdx];
@@ -61,6 +64,76 @@ export function PlayerProvider({ children }) {
     }
   }, [currentTime, listenRecorded, currentEpisode]);
 
+  // مؤقت النوم | Sleep Timer logic
+  const startSleepTimer = useCallback((minutes) => {
+    if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+
+    if (!minutes) {
+      setSleepTimer(null);
+      return;
+    }
+
+    let remaining = minutes * 60; // seconds
+    setSleepTimer(minutes);
+
+    sleepIntervalRef.current = setInterval(() => {
+      remaining--;
+      const minsLeft = Math.ceil(remaining / 60);
+      setSleepTimer(minsLeft > 0 ? minsLeft : null);
+
+      if (remaining <= 0) {
+        clearInterval(sleepIntervalRef.current);
+        sleepIntervalRef.current = null;
+        setSleepTimer(null);
+        audio.pause();
+        setIsPlaying(false);
+      }
+    }, 1000);
+  }, [audio]);
+
+  const cancelSleepTimer = useCallback(() => {
+    if (sleepIntervalRef.current) {
+      clearInterval(sleepIntervalRef.current);
+      sleepIntervalRef.current = null;
+    }
+    setSleepTimer(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (sleepIntervalRef.current) clearInterval(sleepIntervalRef.current);
+    };
+  }, []);
+
+  // اختصارات لوحة المفاتيح | Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyboard = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (!currentEpisode) return;
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          if (isPlaying) { audio.pause(); setIsPlaying(false); }
+          else { audio.play(); setIsPlaying(true); }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          audio.currentTime = Math.min(audio.currentTime + 15, duration);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          audio.currentTime = Math.max(audio.currentTime - 15, 0);
+          break;
+        case 'KeyM':
+          audio.muted = !audio.muted;
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, [audio, currentEpisode, isPlaying, duration]);
+
   function loadAndPlay(episode) {
     audio.src = episode.audio_file_url;
     audio.playbackRate = playbackRate;
@@ -74,7 +147,6 @@ export function PlayerProvider({ children }) {
     setIsPlaying(true);
   }
 
-  // تشغيل حلقة | Play an episode
   const playEpisode = useCallback((episode, podcast = '', episodes = []) => {
     if (currentEpisode?.id === episode.id) {
       if (isPlaying) { audio.pause(); setIsPlaying(false); }
@@ -82,7 +154,6 @@ export function PlayerProvider({ children }) {
       return;
     }
 
-    // إعداد قائمة التشغيل | Setup playlist
     if (episodes.length > 0) {
       setPlaylist(episodes);
       const idx = episodes.findIndex((e) => e.id === episode.id);
@@ -91,6 +162,35 @@ export function PlayerProvider({ children }) {
 
     setPodcastTitle(podcast);
     loadAndPlay(episode);
+  }, [audio, currentEpisode, isPlaying, playbackRate]);
+
+  // تشغيل من ثانية معينة | Play from specific timestamp
+  const playFromTimestamp = useCallback((episode, podcast, episodes, seconds) => {
+    if (currentEpisode?.id === episode.id) {
+      audio.currentTime = seconds;
+      if (!isPlaying) { audio.play(); setIsPlaying(true); }
+      return;
+    }
+
+    if (episodes.length > 0) {
+      setPlaylist(episodes);
+      const idx = episodes.findIndex((e) => e.id === episode.id);
+      setPlaylistIndex(idx >= 0 ? idx : 0);
+    }
+
+    setPodcastTitle(podcast);
+    audio.src = episode.audio_file_url;
+    audio.playbackRate = playbackRate;
+    setCurrentEpisode(episode);
+    setListenRecorded(false);
+
+    audio.addEventListener('loadedmetadata', function onceLoaded() {
+      audio.currentTime = seconds;
+      audio.play();
+      setIsPlaying(true);
+      audio.removeEventListener('loadedmetadata', onceLoaded);
+    });
+    audio.load();
   }, [audio, currentEpisode, isPlaying, playbackRate]);
 
   const togglePlay = () => {
@@ -108,7 +208,6 @@ export function PlayerProvider({ children }) {
     audio.playbackRate = rate;
   };
 
-  // الحلقة التالية والسابقة | Next/previous
   const playNext = () => {
     if (playlistIndex < playlist.length - 1) {
       const nextIdx = playlistIndex + 1;
@@ -131,8 +230,9 @@ export function PlayerProvider({ children }) {
     <PlayerContext.Provider value={{
       currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
       playlist, playlistIndex, hasNext, hasPrev,
-      playEpisode, togglePlay, seek, skipForward, skipBackward, changeSpeed,
-      playNext, playPrev,
+      sleepTimer,
+      playEpisode, playFromTimestamp, togglePlay, seek, skipForward, skipBackward, changeSpeed,
+      playNext, playPrev, startSleepTimer, cancelSleepTimer,
     }}>
       {children}
     </PlayerContext.Provider>

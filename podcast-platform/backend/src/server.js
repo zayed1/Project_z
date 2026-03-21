@@ -18,9 +18,13 @@ const adminRoutes = require('./routes/admin');
 const likesRoutes = require('./routes/likes');
 const discoverRoutes = require('./routes/discover');
 const userManagementRoutes = require('./routes/userManagement');
+const followRoutes = require('./routes/follows');
 const rssRoutes = require('./routes/rss');
 const sitemapRoutes = require('./routes/sitemap');
 const { downloadBackup } = require('./controllers/backupController');
+const { importFromRSS } = require('./controllers/rssImportController');
+const { getUserBadges } = require('./controllers/badgesController');
+const { getDetailedStats } = require('./controllers/detailedStatsController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -58,7 +62,11 @@ app.use('/api', adminRoutes);
 app.use('/api', likesRoutes);
 app.use('/api', discoverRoutes);
 app.use('/api', userManagementRoutes);
+app.use('/api', followRoutes);
 app.get('/api/admin/backup', authenticate, requireAdmin, downloadBackup);
+app.post('/api/admin/import-rss', authenticate, requireAdmin, importFromRSS);
+app.get('/api/me/badges', authenticate, getUserBadges);
+app.get('/api/admin/detailed-stats', authenticate, requireAdmin, getDetailedStats);
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 

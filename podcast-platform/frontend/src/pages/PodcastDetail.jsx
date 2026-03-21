@@ -3,7 +3,7 @@
 // مع إعجاب + نص مكتوب + بحث + QR + مقترحات
 // ============================================
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { podcastsAPI, commentsAPI, episodesAPI } from '../utils/api';
 import { usePlayer } from '../context/PlayerContext';
@@ -14,11 +14,15 @@ import LikeDislike from '../components/LikeDislike';
 import TranscriptViewer from '../components/TranscriptViewer';
 import SuggestedPodcasts from '../components/SuggestedPodcasts';
 import QRCode from '../components/QRCode';
-import { DetailSkeleton, EpisodeSkeleton } from '../components/EnhancedSkeleton';
+import FollowButton from '../components/FollowButton';
+import TimestampShare from '../components/TimestampShare';
+import MarkdownRenderer from '../components/MarkdownRenderer';
+import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
   const { id } = useParams();
-  const { playEpisode, currentEpisode, isPlaying } = usePlayer();
+  const [searchParams] = useSearchParams();
+  const { playEpisode, playFromTimestamp, currentEpisode, isPlaying } = usePlayer();
   const toast = useToast();
   const [podcast, setPodcast] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +66,17 @@ export default function PodcastDetail() {
     setSearchResults(null);
     setEpisodeSearch('');
   }, [id]);
+
+  // معالجة رابط الوقت المحدد | Handle timestamp URL
+  useEffect(() => {
+    if (!podcast) return;
+    const epId = searchParams.get('ep');
+    const time = parseInt(searchParams.get('t'), 10);
+    if (epId && time > 0) {
+      const ep = (podcast.episodes || []).find((e) => e.id === epId);
+      if (ep) playFromTimestamp(ep, podcast.title, podcast.episodes, time);
+    }
+  }, [podcast, searchParams, playFromTimestamp]);
 
   // بحث في الحلقات | Search episodes
   useEffect(() => {
@@ -204,11 +219,14 @@ export default function PodcastDetail() {
                 {podcast.category.name}
               </span>
             )}
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              {podcast.description || 'لا يوجد وصف'}
-            </p>
+            {podcast.description ? (
+              <MarkdownRenderer content={podcast.description} />
+            ) : (
+              <p className="text-gray-600 dark:text-gray-400">لا يوجد وصف</p>
+            )}
             <div className="flex items-center gap-4 mt-4 text-sm text-gray-400 flex-wrap">
               <span>{podcast.episodes?.length || 0} حلقة</span>
+              <FollowButton podcastId={id} />
               <a href={rssUrl} target="_blank" rel="noopener noreferrer"
                 className="text-orange-500 hover:text-orange-600 flex items-center gap-1">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
@@ -310,7 +328,9 @@ export default function PodcastDetail() {
                             {episode.episode_number && `${episode.episode_number}. `}{episode.title}
                           </h3>
                           {episode.description && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{episode.description}</p>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                              <MarkdownRenderer content={episode.description} className="!text-sm !text-gray-500 dark:!text-gray-400" />
+                            </div>
                           )}
                         </div>
                       </button>
@@ -336,6 +356,9 @@ export default function PodcastDetail() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                           </svg>
                         </button>
+
+                        {/* مشاركة وقت محدد | Timestamp Share */}
+                        <TimestampShare podcastId={id} episodeId={episode.id} />
 
                         {/* تعليقات | Comments toggle */}
                         <button onClick={() => toggleComments(episode.id)}
