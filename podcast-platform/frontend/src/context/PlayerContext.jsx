@@ -247,12 +247,19 @@ export function PlayerProvider({ children }) {
   const hasNext = playlist.length > 0 && playlistIndex < playlist.length - 1;
   const hasPrev = playlist.length > 0 && playlistIndex > 0;
 
+  // واجهات إضافية | Additional APIs
+  const seekBy = (seconds) => { audio.currentTime = Math.max(0, Math.min(audio.currentTime + seconds, duration)); };
+  const seekTo = (time) => { audio.currentTime = time; };
+  const [volume, setVolumeState] = useState(1);
+  const setVolume = (v) => { audio.volume = v; setVolumeState(v); };
+
   return (
     <PlayerContext.Provider value={{
       currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
       playlist, playlistIndex, hasNext, hasPrev,
-      sleepTimer,
-      playEpisode, playFromTimestamp, togglePlay, seek, skipForward, skipBackward, changeSpeed,
+      sleepTimer, volume, audioRef,
+      playEpisode, playFromTimestamp, togglePlay, seek, seekBy, seekTo,
+      skipForward, skipBackward, changeSpeed, setVolume,
       playNext, playPrev, startSleepTimer, cancelSleepTimer,
     }}>
       {children}

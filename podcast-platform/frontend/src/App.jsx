@@ -19,7 +19,10 @@ const Admin = lazy(() => import('./pages/Admin'));
 const FollowsPage = lazy(() => import('./pages/FollowsPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PlaylistsPage = lazy(() => import('./pages/PlaylistsPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 
 function PageLoader() {
   return (
@@ -32,6 +35,7 @@ function PageLoader() {
 export default function App() {
   const { dark, toggleTheme, colorTheme, changeColorTheme, themes } = useTheme();
   const { currentEpisode } = usePlayer();
+  useKeyboardShortcuts();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   return (
@@ -52,6 +56,12 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
               قائمتي
+            </Link>
+            <Link to="/playlists" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              قوائم
             </Link>
             <Link to="/follows" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,6 +146,7 @@ export default function App() {
             <Route path="/follows" element={<FollowsPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="/playlists" element={<PlaylistsPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

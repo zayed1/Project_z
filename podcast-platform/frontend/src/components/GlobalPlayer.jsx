@@ -5,6 +5,8 @@
 import { usePlayer } from '../context/PlayerContext';
 import { useState } from 'react';
 import DrivingMode from './DrivingMode';
+import PlaybackSpeed from './PlaybackSpeed';
+import SleepTimer from './SleepTimer';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const SLEEP_OPTIONS = [15, 30, 45, 60, 90];

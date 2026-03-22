@@ -22,6 +22,11 @@ import OfflineDownload from '../components/OfflineDownload';
 import ClipCreator from '../components/ClipCreator';
 import EpisodePoll from '../components/EpisodePoll';
 import EmbedCode from '../components/EmbedCode';
+import StarRating from '../components/StarRating';
+import SocialShare from '../components/SocialShare';
+import DrivingMode from '../components/DrivingMode';
+import TTSPreview from '../components/TTSPreview';
+import ChapterMarkers from '../components/ChapterMarkers';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -374,6 +379,15 @@ export default function PodcastDetail() {
                         {/* كود التضمين | Embed */}
                         <EmbedCode episodeId={episode.id} />
 
+                        {/* مشاركة اجتماعية | Social Share */}
+                        <SocialShare title={episode.title} url={`${window.location.origin}/podcast/${id}?ep=${episode.id}`} />
+
+                        {/* قراءة الوصف | TTS Preview */}
+                        <TTSPreview text={episode.description} />
+
+                        {/* وضع القيادة | Driving Mode */}
+                        <DrivingMode />
+
                         {/* تعليقات | Comments toggle */}
                         <button onClick={() => toggleComments(episode.id)}
                           className={`p-1.5 rounded-lg transition-colors ${isCommentsOpen ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
@@ -387,6 +401,14 @@ export default function PodcastDetail() {
                     {episode.transcript && (
                       <TranscriptViewer transcript={episode.transcript} />
                     )}
+
+                    {/* تقييم بالنجوم | Star Rating */}
+                    <div className="mt-2">
+                      <StarRating episodeId={episode.id} />
+                    </div>
+
+                    {/* علامات الفصول | Chapter Markers */}
+                    <ChapterMarkers episodeId={episode.id} />
 
                     {/* استطلاع | Poll */}
                     <EpisodePoll episodeId={episode.id} />

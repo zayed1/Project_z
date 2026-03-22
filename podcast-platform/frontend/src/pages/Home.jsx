@@ -15,6 +15,7 @@ import BadgesDisplay from '../components/BadgesDisplay';
 import HeroCarousel from '../components/HeroCarousel';
 import VoiceSearch from '../components/VoiceSearch';
 import SmartRecommendations from '../components/SmartRecommendations';
+import AdvancedSearch from '../components/AdvancedSearch';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -153,6 +154,7 @@ export default function Home() {
             className="flex-1 px-4 py-2.5 rounded-lg text-gray-800 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary-300"
           />
           <VoiceSearch onResult={(text) => { setSearchInput(text); setSearch(text); }} />
+          <AdvancedSearch onSearch={(filters) => console.log('filters', filters)} categories={categories} />
           <button type="submit" className="bg-primary-500 text-white font-medium px-6 py-2.5 rounded-lg hover:bg-primary-600 transition-colors">
             بحث
           </button>

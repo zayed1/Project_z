@@ -4,6 +4,8 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
+const { Server: SocketServer } = require('socket.io');
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
@@ -36,11 +38,31 @@ const { getRecommendations } = require('./controllers/recommendationsController'
 const { recordGeoListen, getGeoStats } = require('./controllers/geoAnalyticsController');
 const { getEmbedData, getEmbedPage } = require('./controllers/embedController');
 const { getScheduledEpisodes, updateSchedule } = require('./controllers/schedulerController');
+const { createPlaylist, getMyPlaylists, getPlaylist, addToPlaylist, removeFromPlaylist, deletePlaylist } = require('./controllers/playlistsController');
+const { rateEpisode, getEpisodeRating } = require('./controllers/ratingsController');
+const { submitReport, getReports, updateReport } = require('./controllers/reportsController');
+const { getChapters, saveChapters } = require('./controllers/chaptersController');
+const { savePlaybackPosition, getPlaybackPosition, getAllPositions } = require('./controllers/syncController');
+const { createABTest, getVariant, recordClick, getABTests } = require('./controllers/abTestingController');
+const { exportUsers, exportStats } = require('./controllers/exportController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketServer(server, { cors: { origin: '*' } });
 const PORT = process.env.PORT || 3000;
+
+// WebSocket إشعارات حية | Live Notifications
+io.on('connection', (socket) => {
+  socket.on('join', (userId) => {
+    if (userId) socket.join(`user:${userId}`);
+  });
+  socket.on('disconnect', () => {});
+});
+
+// دالة لإرسال إشعار حي | Helper to emit live notification
+app.set('io', io);
 
 // ============================================
 // الأمان | Security
@@ -125,6 +147,42 @@ app.get('/embed/:episodeId', getEmbedPage);
 app.get('/api/admin/scheduler', authenticate, requireAdmin, getScheduledEpisodes);
 app.put('/api/admin/scheduler/:episodeId', authenticate, requireAdmin, updateSchedule);
 
+// قوائم التشغيل | Playlists
+app.post('/api/playlists', authenticate, createPlaylist);
+app.get('/api/me/playlists', authenticate, getMyPlaylists);
+app.get('/api/playlists/:playlistId', getPlaylist);
+app.post('/api/playlists/:playlistId/items', authenticate, addToPlaylist);
+app.delete('/api/playlists/:playlistId/items/:itemId', authenticate, removeFromPlaylist);
+app.delete('/api/playlists/:playlistId', authenticate, deletePlaylist);
+
+// التقييمات | Ratings
+app.post('/api/episodes/:episodeId/rate', authenticate, rateEpisode);
+app.get('/api/episodes/:episodeId/rating', getEpisodeRating);
+
+// البلاغات | Reports
+app.post('/api/reports', authenticate, submitReport);
+app.get('/api/admin/reports', authenticate, requireAdmin, getReports);
+app.put('/api/admin/reports/:reportId', authenticate, requireAdmin, updateReport);
+
+// الفصول | Chapters
+app.get('/api/episodes/:episodeId/chapters', getChapters);
+app.put('/api/admin/episodes/:episodeId/chapters', authenticate, requireAdmin, saveChapters);
+
+// المزامنة | Sync
+app.post('/api/me/sync', authenticate, savePlaybackPosition);
+app.get('/api/me/sync/:episodeId', authenticate, getPlaybackPosition);
+app.get('/api/me/sync', authenticate, getAllPositions);
+
+// A/B Testing
+app.post('/api/admin/ab-tests', authenticate, requireAdmin, createABTest);
+app.get('/api/admin/ab-tests', authenticate, requireAdmin, getABTests);
+app.get('/api/episodes/:episodeId/variant', getVariant);
+app.post('/api/ab-tests/:testId/click', recordClick);
+
+// التصدير | Export
+app.get('/api/admin/export/users', authenticate, requireAdmin, exportUsers);
+app.get('/api/admin/export/stats', authenticate, requireAdmin, exportStats);
+
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 
@@ -160,6 +218,6 @@ app.use((req, res) => {
 // ============================================
 // تشغيل الخادم | Start Server
 // ============================================
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`خادم منصة البودكاست يعمل على البورت ${PORT}`);
 });

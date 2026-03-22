@@ -277,6 +277,104 @@ CREATE POLICY "geo_listens_read" ON geo_listens FOR SELECT USING (true);
 CREATE POLICY "geo_listens_insert" ON geo_listens FOR INSERT WITH CHECK (true);
 
 -- ============================================
+-- Batch 7: قوائم التشغيل | Playlists
+-- ============================================
+CREATE TABLE IF NOT EXISTS playlists (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS playlist_items (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  position INT DEFAULT 0,
+  added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE playlists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE playlist_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "playlists_all" ON playlists FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "playlist_items_all" ON playlist_items FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 7: التقييمات | Ratings
+-- ============================================
+CREATE TABLE IF NOT EXISTS ratings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(episode_id, user_id)
+);
+ALTER TABLE ratings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ratings_all" ON ratings FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 7: البلاغات | Reports
+-- ============================================
+CREATE TABLE IF NOT EXISTS reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  target_id UUID NOT NULL,
+  reason TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "reports_all" ON reports FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 7: الفصول | Chapters
+-- ============================================
+CREATE TABLE IF NOT EXISTS chapters (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  start_time REAL NOT NULL,
+  end_time REAL
+);
+ALTER TABLE chapters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "chapters_all" ON chapters FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 7: المزامنة | Playback Sync
+-- ============================================
+CREATE TABLE IF NOT EXISTS playback_sync (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  position REAL NOT NULL DEFAULT 0,
+  duration REAL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, episode_id)
+);
+ALTER TABLE playback_sync ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "playback_sync_all" ON playback_sync FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 7: A/B Testing
+-- ============================================
+CREATE TABLE IF NOT EXISTS ab_tests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  variant_a TEXT NOT NULL,
+  variant_b TEXT NOT NULL,
+  views_a INT DEFAULT 0,
+  views_b INT DEFAULT 0,
+  clicks_a INT DEFAULT 0,
+  clicks_b INT DEFAULT 0,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE ab_tests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ab_tests_all" ON ab_tests FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

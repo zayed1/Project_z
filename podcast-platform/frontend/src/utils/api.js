@@ -143,6 +143,39 @@ export const adminAPI = {
   getScheduledEpisodes: (params) => api.get('/admin/scheduler', { params }),
   updateSchedule: (episodeId, data) => api.put(`/admin/scheduler/${episodeId}`, data),
   createPoll: (data) => api.post('/admin/polls', data),
+  getReports: (params) => api.get('/admin/reports', { params }),
+  updateReport: (id, data) => api.put(`/admin/reports/${id}`, data),
+  getABTests: () => api.get('/admin/ab-tests'),
+  createABTest: (data) => api.post('/admin/ab-tests', data),
+  saveChapters: (episodeId, chapters) => api.put(`/admin/episodes/${episodeId}/chapters`, { chapters }),
+};
+
+// قوائم التشغيل | Playlists
+export const playlistsAPI = {
+  create: (data) => api.post('/playlists', data),
+  getMy: () => api.get('/me/playlists'),
+  get: (id) => api.get(`/playlists/${id}`),
+  addItem: (playlistId, episodeId) => api.post(`/playlists/${playlistId}/items`, { episode_id: episodeId }),
+  removeItem: (playlistId, itemId) => api.delete(`/playlists/${playlistId}/items/${itemId}`),
+  delete: (id) => api.delete(`/playlists/${id}`),
+};
+
+// التقييمات | Ratings
+export const ratingsAPI = {
+  rate: (episodeId, rating) => api.post(`/episodes/${episodeId}/rate`, { rating }),
+  get: (episodeId, userId) => api.get(`/episodes/${episodeId}/rating`, { params: { userId } }),
+};
+
+// البلاغات | Reports
+export const reportsAPI = {
+  submit: (data) => api.post('/reports', data),
+};
+
+// المزامنة | Sync
+export const syncAPI = {
+  save: (data) => api.post('/me/sync', data),
+  get: (episodeId) => api.get(`/me/sync/${episodeId}`),
+  getAll: () => api.get('/me/sync'),
 };
 
 export default api;

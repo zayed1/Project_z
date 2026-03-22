@@ -1,55 +1,56 @@
 // ============================================
-// متحكم التصدير | Export Controller
+// متحكم تصدير البيانات | Data Export Controller
 // ============================================
 const { supabase } = require('../config/supabase');
 
-// تصدير بيانات الإحصائيات كـ JSON أو CSV
-async function exportData(req, res) {
+// تصدير المستخدمين CSV | Export users as CSV
+async function exportUsers(req, res) {
   try {
-    const { format = 'json' } = req.query;
-
-    // جلب كل البودكاست مع حلقاتها | Get all podcasts with episodes
-    const { data: podcasts } = await supabase
-      .from('podcasts')
-      .select(`
-        id, title, created_at,
-        episodes (id, title, listen_count, episode_number, published_at, created_at)
-      `)
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, email, role, created_at')
       .order('created_at', { ascending: false });
 
-    const exportRows = [];
-    for (const p of (podcasts || [])) {
-      for (const ep of (p.episodes || [])) {
-        exportRows.push({
-          podcast_title: p.title,
-          episode_title: ep.title,
-          episode_number: ep.episode_number || '',
-          listen_count: ep.listen_count || 0,
-          published_at: ep.published_at || '',
-          created_at: ep.created_at || '',
-        });
-      }
-    }
+    if (error) throw error;
 
-    if (format === 'csv') {
-      const headers = 'podcast_title,episode_title,episode_number,listen_count,published_at,created_at';
-      const rows = exportRows.map((r) =>
-        `"${r.podcast_title}","${r.episode_title}",${r.episode_number},${r.listen_count},"${r.published_at}","${r.created_at}"`
-      );
-      const csv = [headers, ...rows].join('\n');
+    const headers = ['ID', 'اسم المستخدم', 'البريد', 'الدور', 'تاريخ التسجيل'];
+    const rows = (data || []).map((u) => [u.id, u.username, u.email, u.role, u.created_at]);
 
-      res.set('Content-Type', 'text/csv; charset=utf-8');
-      res.set('Content-Disposition', `attachment; filename=podcast-stats-${Date.now()}.csv`);
-      return res.send('\uFEFF' + csv); // BOM for Arabic support in Excel
-    }
+    const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
 
-    // JSON format
-    res.set('Content-Disposition', `attachment; filename=podcast-stats-${Date.now()}.json`);
-    res.json({ export_date: new Date().toISOString(), data: exportRows });
+    const bom = '\uFEFF';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+    res.send(bom + csv);
   } catch (err) {
-    console.error('خطأ في التصدير:', err.message);
-    res.status(500).json({ error: true, message: 'فشل في تصدير البيانات' });
+    res.status(500).json({ error: true, message: 'فشل في التصدير' });
   }
 }
 
-module.exports = { exportData };
+// تصدير الإحصائيات CSV | Export stats as CSV
+async function exportStats(req, res) {
+  try {
+    const { data: episodes, error } = await supabase
+      .from('episodes')
+      .select('id, title, play_count, created_at, podcast_id, podcasts:podcast_id(title)')
+      .order('play_count', { ascending: false });
+
+    if (error) throw error;
+
+    const headers = ['ID', 'عنوان الحلقة', 'البودكاست', 'مرات التشغيل', 'تاريخ النشر'];
+    const rows = (episodes || []).map((e) => [
+      e.id, e.title, e.podcasts?.title || '', e.play_count || 0, e.created_at,
+    ]);
+
+    const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+
+    const bom = '\uFEFF';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=stats.csv');
+    res.send(bom + csv);
+  } catch (err) {
+    res.status(500).json({ error: true, message: 'فشل في التصدير' });
+  }
+}
+
+module.exports = { exportUsers, exportStats };
