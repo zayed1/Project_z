@@ -19,6 +19,11 @@ import MessageTemplates from '../components/MessageTemplates';
 import SiteSettingsPanel from '../components/SiteSettingsPanel';
 import WeeklyReport from '../components/WeeklyReport';
 import AuditLogViewer from '../components/AuditLogViewer';
+import LiveMonitor from '../components/LiveMonitor';
+import ScheduledPosts from '../components/ScheduledPosts';
+import EpisodeCompare from '../components/EpisodeCompare';
+import RatingsManager from '../components/RatingsManager';
+import ListenRoom from '../components/ListenRoom';
 
 export default function Admin() {
   const { user, login, logout, loading: authLoading } = useAuth();
@@ -408,10 +413,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'charts', 'scheduler', 'geo', 'ab-test', 'export', 'webhooks', 'health', 'categories', 'rss', 'broadcast', 'users', 'logs', 'comments', 'templates', 'settings', 'weekly', 'audit'].map((t) => (
+        {['podcasts', 'stats', 'charts', 'scheduler', 'geo', 'ab-test', 'export', 'webhooks', 'health', 'categories', 'rss', 'broadcast', 'users', 'logs', 'comments', 'templates', 'settings', 'weekly', 'audit', 'live', 'scheduled', 'compare', 'ratings', 'rooms'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', charts: 'الرسوم البيانية', scheduler: 'الجدولة', geo: 'الجغرافية', 'ab-test': 'A/B Testing', export: 'التصدير', webhooks: 'Webhooks', health: 'صحة النظام', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات', comments: 'التعليقات', templates: 'القوالب', settings: 'الإعدادات', weekly: 'التقرير الأسبوعي', audit: 'سجل التعديلات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', charts: 'الرسوم البيانية', scheduler: 'الجدولة', geo: 'الجغرافية', 'ab-test': 'A/B Testing', export: 'التصدير', webhooks: 'Webhooks', health: 'صحة النظام', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات', comments: 'التعليقات', templates: 'القوالب', settings: 'الإعدادات', weekly: 'التقرير الأسبوعي', audit: 'سجل التعديلات', live: 'المراقبة الحية', scheduled: 'منشورات مجدولة', compare: 'مقارنة الحلقات', ratings: 'التقييمات', rooms: 'غرف الاستماع' }[t]}
           </button>
         ))}
       </div>
@@ -791,6 +796,21 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Audit Log Tab */}
       {tab === 'audit' && <AuditLogViewer />}
+
+      {/* Live Monitor Tab */}
+      {tab === 'live' && <LiveMonitor />}
+
+      {/* Scheduled Posts Tab */}
+      {tab === 'scheduled' && <ScheduledPosts />}
+
+      {/* Episode Compare Tab */}
+      {tab === 'compare' && <EpisodeCompare />}
+
+      {/* Ratings Manager Tab */}
+      {tab === 'ratings' && <RatingsManager />}
+
+      {/* Listen Rooms Tab */}
+      {tab === 'rooms' && <ListenRoom />}
 
       {/* Content Tab */}
       {tab === 'podcasts' && (

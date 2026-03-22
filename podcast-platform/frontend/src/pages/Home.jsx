@@ -19,6 +19,8 @@ import AdvancedSearch from '../components/AdvancedSearch';
 import MoodFilter from '../components/MoodFilter';
 import PodcastCarousel from '../components/PodcastCarousel';
 import ViewToggle from '../components/ViewToggle';
+import WeeklyChallenges from '../components/WeeklyChallenges';
+import ListenTimeRecommender from '../components/ListenTimeRecommender';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -197,6 +199,12 @@ export default function Home() {
 
       {/* اقتراحات ذكية | Smart Recommendations */}
       <SmartRecommendations />
+
+      {/* التحديات الأسبوعية | Weekly Challenges */}
+      <WeeklyChallenges />
+
+      {/* اقتراح أوقات الاستماع | Listen Time Recommender */}
+      <ListenTimeRecommender />
 
       {/* إحصائيات المستمع | Listener Stats */}
       <ListenerStats />

@@ -62,6 +62,18 @@ const { getSettings, updateSettings } = require('./controllers/siteSettingsContr
 const { bulkDeleteComments, getFilteredComments } = require('./controllers/bulkCommentsController');
 const { createTemplate, getTemplates, updateTemplate, deleteTemplate } = require('./controllers/messageTemplatesController');
 const { getWeeklyReport } = require('./controllers/weeklyReportController');
+const { getPrefetchData } = require('./controllers/prefetchController');
+const { getOptimizedImage } = require('./controllers/imageController');
+const { getWeeklyChallenges, checkAchievement } = require('./controllers/achievementsController');
+const { trackMood, getMoodHistory } = require('./controllers/moodTrackController');
+const { getLiveStats } = require('./controllers/liveMonitorController');
+const { compareEpisodes } = require('./controllers/episodeCompareController');
+const { getFilteredRatings, deleteRating } = require('./controllers/ratingsManageController');
+const { recordPosition, getHeatmap } = require('./controllers/heatmapController');
+const { createRoom, getRooms, getRoom } = require('./controllers/listenRoomController');
+const { sendGift, getMyGifts } = require('./controllers/giftController');
+const { addFanMessage, getFanMessages, deleteFanMessage } = require('./controllers/fanWallController');
+const { createScheduledPost, getScheduledPosts, deleteScheduledPost } = require('./controllers/scheduledPostsController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -262,6 +274,53 @@ app.delete('/api/admin/templates/:templateId', authenticate, requireAdmin, delet
 
 // التقرير الأسبوعي | Weekly Report
 app.get('/api/admin/weekly-report', authenticate, requireAdmin, getWeeklyReport);
+
+// البيانات المسبقة | Prefetch
+app.get('/api/podcasts/:id/prefetch', getPrefetchData);
+
+// الصور المحسّنة | Optimized Images
+app.get('/api/images/optimize', getOptimizedImage);
+
+// التحديات الأسبوعية | Weekly Challenges
+app.get('/api/me/challenges', authenticate, getWeeklyChallenges);
+app.post('/api/me/achievements/check', authenticate, checkAchievement);
+
+// تتبع المزاج | Mood Tracking
+app.post('/api/me/mood-track', authenticate, trackMood);
+app.get('/api/me/mood-history', authenticate, getMoodHistory);
+
+// المراقبة الحية | Live Monitor
+app.get('/api/admin/live-stats', authenticate, requireAdmin, getLiveStats);
+
+// مقارنة الحلقات | Episode Compare
+app.post('/api/admin/episodes/compare', authenticate, requireAdmin, compareEpisodes);
+
+// إدارة التقييمات | Ratings Management
+app.get('/api/admin/ratings', authenticate, requireAdmin, getFilteredRatings);
+app.delete('/api/admin/ratings/:ratingId', authenticate, requireAdmin, deleteRating);
+
+// خريطة الاستماع الحرارية | Listen Heatmap
+app.post('/api/episodes/:episodeId/heatmap', recordPosition);
+app.get('/api/episodes/:episodeId/heatmap', getHeatmap);
+
+// غرف الاستماع | Listen Rooms
+app.post('/api/listen-rooms', authenticate, createRoom);
+app.get('/api/listen-rooms', getRooms);
+app.get('/api/listen-rooms/:roomId', getRoom);
+
+// الهدايا | Gifts
+app.post('/api/gifts', authenticate, sendGift);
+app.get('/api/me/gifts', authenticate, getMyGifts);
+
+// جدار المعجبين | Fan Wall
+app.post('/api/podcasts/:podcastId/fan-wall', authenticate, addFanMessage);
+app.get('/api/podcasts/:podcastId/fan-wall', getFanMessages);
+app.delete('/api/fan-wall/:messageId', authenticate, deleteFanMessage);
+
+// المنشورات المجدولة | Scheduled Posts
+app.post('/api/admin/scheduled-posts', authenticate, requireAdmin, createScheduledPost);
+app.get('/api/admin/scheduled-posts', authenticate, requireAdmin, getScheduledPosts);
+app.delete('/api/admin/scheduled-posts/:postId', authenticate, requireAdmin, deleteScheduledPost);
 
 // GraphQL
 app.use('/graphql', graphqlHTTP({ schema, rootValue: root, graphiql: process.env.NODE_ENV !== 'production' }));

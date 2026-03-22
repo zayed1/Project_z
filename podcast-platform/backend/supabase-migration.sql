@@ -510,6 +510,91 @@ ALTER TABLE message_templates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "message_templates_all" ON message_templates FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================
+-- تتبع المزاج | Mood Tracking Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS mood_tracking (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID REFERENCES episodes(id) ON DELETE CASCADE,
+  mood VARCHAR(50) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE mood_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "mood_tracking_all" ON mood_tracking FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- خريطة الاستماع الحرارية | Listen Heatmap Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS listen_heatmap (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  episode_id UUID REFERENCES episodes(id) ON DELETE CASCADE,
+  position_seconds INTEGER NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE listen_heatmap ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "listen_heatmap_all" ON listen_heatmap FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- غرف الاستماع | Listen Rooms Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS listen_rooms (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  episode_id UUID REFERENCES episodes(id) ON DELETE SET NULL,
+  creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  members_count INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE listen_rooms ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "listen_rooms_all" ON listen_rooms FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- الهدايا | Episode Gifts Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS episode_gifts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipient_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID REFERENCES episodes(id) ON DELETE CASCADE,
+  message TEXT,
+  read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE episode_gifts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "episode_gifts_all" ON episode_gifts FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- جدار المعجبين | Fan Wall Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS fan_wall (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  podcast_id UUID REFERENCES podcasts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL CHECK (char_length(message) <= 280),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE fan_wall ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "fan_wall_all" ON fan_wall FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- المنشورات المجدولة | Scheduled Posts Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS scheduled_posts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title VARCHAR(255) NOT NULL,
+  content TEXT,
+  type VARCHAR(50) DEFAULT 'announcement',
+  scheduled_at TIMESTAMPTZ NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_by UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE scheduled_posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "scheduled_posts_all" ON scheduled_posts FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

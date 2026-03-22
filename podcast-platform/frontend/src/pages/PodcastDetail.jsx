@@ -30,6 +30,15 @@ import ChapterMarkers from '../components/ChapterMarkers';
 import TimedComments from '../components/TimedComments';
 import EpisodeNotes from '../components/EpisodeNotes';
 import FocusMode from '../components/FocusMode';
+import MoodTracker from '../components/MoodTracker';
+import GiftEpisode from '../components/GiftEpisode';
+import MomentShare from '../components/MomentShare';
+import EpisodeQuiz from '../components/EpisodeQuiz';
+import ListenHeatmap from '../components/ListenHeatmap';
+import SimilarEpisodes from '../components/SimilarEpisodes';
+import FanWall from '../components/FanWall';
+import NowPlayingIndicator from '../components/NowPlayingIndicator';
+import EpisodeProgressBar from '../components/EpisodeProgressBar';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -330,8 +339,8 @@ export default function PodcastDetail() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                           active ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
                         }`}>
-                          {active && isPlaying ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                          {active ? (
+                            <NowPlayingIndicator isPlaying={isPlaying} />
                           ) : (
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                           )}
@@ -388,6 +397,12 @@ export default function PodcastDetail() {
                         {/* قراءة الوصف | TTS Preview */}
                         <TTSPreview text={episode.description} />
 
+                        {/* إهداء | Gift */}
+                        <GiftEpisode episodeId={episode.id} episodeTitle={episode.title} />
+
+                        {/* مشاركة لحظة | Moment Share */}
+                        <MomentShare episodeId={episode.id} episodeTitle={episode.title} coverUrl={podcast.cover_image_url} />
+
                         {/* وضع القيادة | Driving Mode */}
                         <DrivingMode />
 
@@ -418,6 +433,18 @@ export default function PodcastDetail() {
 
                     {/* ملاحظات شخصية | Episode Notes */}
                     <EpisodeNotes episodeId={episode.id} />
+
+                    {/* خريطة الاستماع الحرارية | Listen Heatmap */}
+                    <ListenHeatmap episodeId={episode.id} />
+
+                    {/* تتبع المزاج | Mood Tracker */}
+                    <MoodTracker episodeId={episode.id} />
+
+                    {/* تحدي الحلقة | Episode Quiz */}
+                    <EpisodeQuiz episodeTitle={episode.title} />
+
+                    {/* شريط التقدم | Progress Bar */}
+                    <EpisodeProgressBar episodeId={episode.id} duration={episode.duration} />
 
                     {/* استطلاع | Poll */}
                     <EpisodePoll episodeId={episode.id} />
@@ -471,6 +498,12 @@ export default function PodcastDetail() {
           </div>
         )}
       </div>
+
+      {/* حلقات مشابهة | Similar Episodes */}
+      <SimilarEpisodes episodeTitle={allEpisodes[0]?.title} podcastId={id} />
+
+      {/* جدار المعجبين | Fan Wall */}
+      <FanWall podcastId={id} />
 
       {/* وضع التركيز | Focus Mode */}
       <FocusMode />

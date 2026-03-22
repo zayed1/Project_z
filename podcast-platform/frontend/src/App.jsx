@@ -28,6 +28,7 @@ const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
+import useScrollRestore from './hooks/useScrollRestore';
 import SeasonalTheme from './components/SeasonalTheme';
 import PageTransition from './components/PageTransition';
 
@@ -43,6 +44,7 @@ export default function App() {
   const { dark, toggleTheme, colorTheme, changeColorTheme, themes } = useTheme();
   const { currentEpisode } = usePlayer();
   useKeyboardShortcuts();
+  useScrollRestore();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   return (
