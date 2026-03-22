@@ -4,6 +4,7 @@
 // ============================================
 import { usePlayer } from '../context/PlayerContext';
 import { useState } from 'react';
+import DrivingMode from './DrivingMode';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const SLEEP_OPTIONS = [15, 30, 45, 60, 90];
@@ -24,8 +25,11 @@ export default function GlobalPlayer() {
 
   const [showSpeed, setShowSpeed] = useState(false);
   const [showSleep, setShowSleep] = useState(false);
+  const [drivingMode, setDrivingMode] = useState(false);
 
   if (!currentEpisode) return null;
+
+  if (drivingMode) return <DrivingMode onClose={() => setDrivingMode(false)} />;
 
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
@@ -131,6 +135,17 @@ export default function GlobalPlayer() {
                 </div>
               )}
             </div>
+
+            {/* وضع القيادة | Driving Mode */}
+            <button
+              onClick={() => setDrivingMode(true)}
+              className="bg-gray-100 dark:bg-gray-700 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              title="وضع القيادة"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </button>
 
             {/* السرعة | Speed */}
             <div className="relative">

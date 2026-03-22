@@ -178,6 +178,30 @@ CREATE POLICY "follows_insert" ON follows FOR INSERT WITH CHECK (true);
 CREATE POLICY "follows_delete" ON follows FOR DELETE USING (true);
 
 -- ============================================
+-- Batch 5: الردود المتداخلة | Nested Replies (parent_id)
+-- ============================================
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES comments(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
+
+-- ============================================
+-- Batch 5: جدول الإشعارات | Notifications Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  podcast_id UUID REFERENCES podcasts(id) ON DELETE SET NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "notifications_read" ON notifications FOR SELECT USING (true);
+CREATE POLICY "notifications_insert" ON notifications FOR INSERT WITH CHECK (true);
+CREATE POLICY "notifications_update" ON notifications FOR UPDATE USING (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

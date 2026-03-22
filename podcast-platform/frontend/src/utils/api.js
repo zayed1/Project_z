@@ -68,6 +68,8 @@ export const commentsAPI = {
   getAll: (episodeId) => api.get(`/episodes/${episodeId}/comments`),
   add: (episodeId, content) => api.post(`/episodes/${episodeId}/comments`, { content }),
   delete: (commentId) => api.delete(`/comments/${commentId}`),
+  getReplies: (commentId) => api.get(`/comments/${commentId}/replies`),
+  addReply: (commentId, content) => api.post(`/comments/${commentId}/replies`, { content }),
 };
 
 // الإعجابات | Likes
@@ -97,6 +99,12 @@ export const badgesAPI = {
   getMyBadges: () => api.get('/me/badges'),
 };
 
+// الإشعارات | Notifications
+export const notificationsAPI = {
+  getMy: () => api.get('/me/notifications'),
+  markRead: () => api.put('/me/notifications/read'),
+};
+
 // المشرف | Admin
 export const adminAPI = {
   getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
@@ -107,6 +115,11 @@ export const adminAPI = {
   downloadBackup: () => api.get('/admin/backup', { responseType: 'blob' }),
   importRSS: (rssUrl) => api.post('/admin/import-rss', { rss_url: rssUrl }),
   getDetailedStats: () => api.get('/admin/detailed-stats'),
+  getEpisodeAnalytics: (episodeId) => api.get(`/admin/episodes/${episodeId}/analytics`),
+  createCategory: (name) => api.post('/admin/categories', { name }),
+  updateCategory: (id, name) => api.put(`/admin/categories/${id}`, { name }),
+  deleteCategory: (id) => api.delete(`/admin/categories/${id}`),
+  sendBroadcast: (data) => api.post('/admin/broadcast', data),
 };
 
 export default api;

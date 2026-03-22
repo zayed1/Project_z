@@ -61,8 +61,29 @@ export function PlayerProvider({ children }) {
     if (currentTime > 30 && !listenRecorded && currentEpisode) {
       setListenRecorded(true);
       api.post(`/episodes/${currentEpisode.id}/listen`).catch(() => {});
+
+      // حفظ في سجل الاستماع المحلي | Save to local listen history
+      try {
+        const raw = localStorage.getItem('listen_history');
+        const history = raw ? JSON.parse(raw) : [];
+        // لا نكرر نفس الحلقة خلال آخر سجل | Avoid duplicate for same episode
+        const exists = history.findIndex((h) => h.episodeId === currentEpisode.id);
+        if (exists >= 0) history.splice(exists, 1);
+        history.unshift({
+          episodeId: currentEpisode.id,
+          episodeTitle: currentEpisode.title,
+          podcastTitle,
+          podcastId: currentEpisode.podcast_id,
+          coverUrl: currentEpisode.cover_image_url || '',
+          position: Math.floor(currentTime),
+          timestamp: Date.now(),
+          episode: currentEpisode,
+        });
+        // نحتفظ بآخر 100 فقط | Keep last 100 only
+        localStorage.setItem('listen_history', JSON.stringify(history.slice(0, 100)));
+      } catch {}
     }
-  }, [currentTime, listenRecorded, currentEpisode]);
+  }, [currentTime, listenRecorded, currentEpisode, podcastTitle]);
 
   // مؤقت النوم | Sleep Timer logic
   const startSleepTimer = useCallback((minutes) => {

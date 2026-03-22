@@ -14,6 +14,8 @@ import About from './pages/About';
 import ListenLaterPage from './pages/ListenLaterPage';
 import Admin from './pages/Admin';
 import FollowsPage from './pages/FollowsPage';
+import HistoryPage from './pages/HistoryPage';
+import NotificationBell from './components/NotificationBell';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -45,9 +47,17 @@ export default function App() {
               </svg>
               متابعاتي
             </Link>
+            <Link to="/history" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              السجل
+            </Link>
             <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               عن المنصة
             </Link>
+
+            <NotificationBell />
 
             {/* اختيار الثيم | Theme Selector */}
             <div className="relative">
@@ -111,6 +121,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/listen-later" element={<ListenLaterPage />} />
           <Route path="/follows" element={<FollowsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

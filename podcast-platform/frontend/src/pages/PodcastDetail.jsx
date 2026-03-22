@@ -17,6 +17,8 @@ import QRCode from '../components/QRCode';
 import FollowButton from '../components/FollowButton';
 import TimestampShare from '../components/TimestampShare';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import CommentReplies from '../components/CommentReplies';
+import OfflineDownload from '../components/OfflineDownload';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -357,6 +359,9 @@ export default function PodcastDetail() {
                           </svg>
                         </button>
 
+                        {/* حفظ للاستماع بدون انترنت | Offline Download */}
+                        <OfflineDownload audioUrl={episode.audio_file_url} />
+
                         {/* مشاركة وقت محدد | Timestamp Share */}
                         <TimestampShare podcastId={id} episodeId={episode.id} />
 
@@ -381,13 +386,16 @@ export default function PodcastDetail() {
                       {epComments.length > 0 ? (
                         <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
                           {epComments.map((c) => (
-                            <div key={c.id} className="flex gap-2">
-                              <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400 flex-shrink-0">
-                                {(c.user?.username || '?')[0]}
-                              </div>
-                              <div>
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{c.user?.username || 'مجهول'}</span>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{c.content}</p>
+                            <div key={c.id}>
+                              <div className="flex gap-2">
+                                <div className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400 flex-shrink-0">
+                                  {(c.user?.username || '?')[0]}
+                                </div>
+                                <div className="flex-1">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{c.user?.username || 'مجهول'}</span>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{c.content}</p>
+                                  {!c.parent_id && <CommentReplies commentId={c.id} />}
+                                </div>
                               </div>
                             </div>
                           ))}

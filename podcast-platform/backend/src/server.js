@@ -25,6 +25,10 @@ const { downloadBackup } = require('./controllers/backupController');
 const { importFromRSS } = require('./controllers/rssImportController');
 const { getUserBadges } = require('./controllers/badgesController');
 const { getDetailedStats } = require('./controllers/detailedStatsController');
+const { getReplies, addReply } = require('./controllers/nestedCommentsController');
+const { getEpisodeAnalytics } = require('./controllers/episodeAnalyticsController');
+const { createCategory, updateCategory, deleteCategory } = require('./controllers/categoryController');
+const { sendBroadcast, getMyNotifications, markNotificationsRead } = require('./controllers/broadcastController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -67,6 +71,24 @@ app.get('/api/admin/backup', authenticate, requireAdmin, downloadBackup);
 app.post('/api/admin/import-rss', authenticate, requireAdmin, importFromRSS);
 app.get('/api/me/badges', authenticate, getUserBadges);
 app.get('/api/admin/detailed-stats', authenticate, requireAdmin, getDetailedStats);
+
+// ردود التعليقات | Nested Replies
+app.get('/api/comments/:commentId/replies', getReplies);
+app.post('/api/comments/:commentId/replies', authenticate, addReply);
+
+// إحصائيات الحلقة | Episode Analytics
+app.get('/api/admin/episodes/:episodeId/analytics', authenticate, requireAdmin, getEpisodeAnalytics);
+
+// إدارة التصنيفات | Category Management
+app.post('/api/admin/categories', authenticate, requireAdmin, createCategory);
+app.put('/api/admin/categories/:categoryId', authenticate, requireAdmin, updateCategory);
+app.delete('/api/admin/categories/:categoryId', authenticate, requireAdmin, deleteCategory);
+
+// الرسائل والإشعارات | Broadcast & Notifications
+app.post('/api/admin/broadcast', authenticate, requireAdmin, sendBroadcast);
+app.get('/api/me/notifications', authenticate, getMyNotifications);
+app.put('/api/me/notifications/read', authenticate, markNotificationsRead);
+
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 

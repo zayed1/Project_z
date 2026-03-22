@@ -233,6 +233,77 @@ function AdminDashboard({ user, onLogout }) {
     }
   };
 
+  // إدارة التصنيفات | Category Management
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+  const [categorySubmitting, setCategorySubmitting] = useState(false);
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setCategorySubmitting(true);
+    try {
+      await adminAPI.createCategory(newCategoryName.trim());
+      toast.success('تم إنشاء التصنيف');
+      setNewCategoryName('');
+      const { data } = await podcastsAPI.getCategories();
+      setCategories(data.categories || []);
+    } catch (err) { toast.error(err.response?.data?.message || 'فشل'); }
+    finally { setCategorySubmitting(false); }
+  };
+
+  const handleUpdateCategory = async (id) => {
+    if (!editingCategoryName.trim()) return;
+    try {
+      await adminAPI.updateCategory(id, editingCategoryName.trim());
+      toast.success('تم تعديل التصنيف');
+      setEditingCategoryId(null);
+      const { data } = await podcastsAPI.getCategories();
+      setCategories(data.categories || []);
+    } catch (err) { toast.error(err.response?.data?.message || 'فشل'); }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return;
+    try {
+      await adminAPI.deleteCategory(id);
+      toast.success('تم حذف التصنيف');
+      const { data } = await podcastsAPI.getCategories();
+      setCategories(data.categories || []);
+    } catch (err) { toast.error(err.response?.data?.message || 'فشل'); }
+  };
+
+  // رسائل جماعية | Broadcast
+  const [broadcastForm, setBroadcastForm] = useState({ title: '', message: '', podcastId: '' });
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+
+  const handleBroadcast = async () => {
+    if (!broadcastForm.title.trim() || !broadcastForm.message.trim()) return;
+    setBroadcastLoading(true);
+    try {
+      const { data } = await adminAPI.sendBroadcast({
+        title: broadcastForm.title, message: broadcastForm.message,
+        podcastId: broadcastForm.podcastId || undefined,
+      });
+      toast.success(data.message);
+      setBroadcastForm({ title: '', message: '', podcastId: '' });
+    } catch (err) { toast.error(err.response?.data?.message || 'فشل'); }
+    finally { setBroadcastLoading(false); }
+  };
+
+  // إحصائيات حلقة | Episode Analytics
+  const [episodeAnalytics, setEpisodeAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const fetchEpisodeAnalytics = async (episodeId) => {
+    setAnalyticsLoading(true);
+    try {
+      const { data } = await adminAPI.getEpisodeAnalytics(episodeId);
+      setEpisodeAnalytics(data);
+    } catch { toast.error('فشل في جلب الإحصائيات'); }
+    finally { setAnalyticsLoading(false); }
+  };
+
   // استيراد RSS | RSS Import
   const [rssUrl, setRssUrl] = useState('');
   const [rssLoading, setRssLoading] = useState(false);
@@ -325,10 +396,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'rss', 'users', 'logs'].map((t) => (
+        {['podcasts', 'stats', 'categories', 'rss', 'broadcast', 'users', 'logs'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', rss: 'استيراد RSS', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
           </button>
         ))}
       </div>
@@ -534,6 +605,117 @@ function AdminDashboard({ user, onLogout }) {
         </div>
       )}
 
+      {/* Category Management Tab */}
+      {tab === 'categories' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">إدارة التصنيفات</h2>
+          <div className="flex gap-3 mb-6">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="اسم التصنيف الجديد"
+              className={inputClass + ' flex-1'}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
+            />
+            <button
+              onClick={handleCreateCategory}
+              disabled={categorySubmitting || !newCategoryName.trim()}
+              className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+            >
+              + إضافة
+            </button>
+          </div>
+          {categories.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">لا توجد تصنيفات</p>
+          ) : (
+            <div className="space-y-2">
+              {categories.map((cat) => (
+                <div key={cat.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  {editingCategoryId === cat.id ? (
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        className={inputClass + ' flex-1'}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory(cat.id)}
+                        autoFocus
+                      />
+                      <button onClick={() => handleUpdateCategory(cat.id)} className="text-green-500 hover:text-green-600 text-sm px-2">حفظ</button>
+                      <button onClick={() => setEditingCategoryId(null)} className="text-gray-400 hover:text-gray-500 text-sm px-2">إلغاء</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-gray-800 dark:text-gray-100 font-medium">{cat.name}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); }}
+                          className="text-blue-500 hover:text-blue-600 text-sm"
+                        >
+                          تعديل
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="text-red-500 hover:text-red-600 text-sm"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Broadcast Tab */}
+      {tab === 'broadcast' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">إرسال رسالة جماعية</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">أرسل إشعاراً لجميع المستخدمين أو متابعي بودكاست معين</p>
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={broadcastForm.title}
+              onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+              placeholder="عنوان الإشعار"
+              className={inputClass}
+            />
+            <textarea
+              value={broadcastForm.message}
+              onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
+              placeholder="نص الرسالة"
+              className={inputClass}
+              rows={3}
+            />
+            <select
+              value={broadcastForm.podcastId}
+              onChange={(e) => setBroadcastForm({ ...broadcastForm, podcastId: e.target.value })}
+              className={inputClass}
+            >
+              <option value="">جميع المستخدمين</option>
+              {podcasts.map((p) => (
+                <option key={p.id} value={p.id}>متابعي: {p.title}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleBroadcast}
+              disabled={broadcastLoading || !broadcastForm.title.trim() || !broadcastForm.message.trim()}
+              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2"
+            >
+              {broadcastLoading ? (
+                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> جاري الإرسال...</>
+              ) : (
+                <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> إرسال</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Activity Log Tab */}
       {tab === 'logs' && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -685,6 +867,7 @@ function AdminDashboard({ user, onLogout }) {
                             <button onClick={() => moveEpisode(ep, 'down', podcast.episodes)} className="p-1 text-gray-400 hover:text-gray-600" title="نقل لأسفل">
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
                             </button>
+                            <button onClick={() => fetchEpisodeAnalytics(ep.id)} className="text-purple-500 hover:text-purple-700 text-sm px-2 py-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/30">إحصائيات</button>
                             <button onClick={() => startEditEpisode(ep, podcast.id)} className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30">تعديل</button>
                             <button onClick={() => handleDeleteEpisode(ep.id)} className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30">حذف</button>
                           </div>
@@ -697,6 +880,61 @@ function AdminDashboard({ user, onLogout }) {
             </div>
           )}
         </>
+      )}
+
+      {/* Episode Analytics Modal */}
+      {episodeAnalytics && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEpisodeAnalytics(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">إحصائيات الحلقة</h3>
+              <button onClick={() => setEpisodeAnalytics(null)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            {analyticsLoading ? (
+              <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto" /></div>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-3">{episodeAnalytics.episode?.title}</p>
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-400">استماع</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{episodeAnalytics.episode?.totalListens || 0}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-400">تعليقات</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{episodeAnalytics.episode?.totalComments || 0}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-xs text-gray-400">إعجابات</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{episodeAnalytics.episode?.totalLikes || 0}</p>
+                  </div>
+                </div>
+                {episodeAnalytics.dailyListens && (
+                  <>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-3">الاستماع خلال 14 يوم</h4>
+                    <div className="flex items-end gap-1 h-32">
+                      {(() => {
+                        const maxVal = Math.max(...episodeAnalytics.dailyListens.map((d) => d.count), 1);
+                        return episodeAnalytics.dailyListens.map((d) => (
+                          <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] text-gray-400">{d.count > 0 ? d.count : ''}</span>
+                            <div
+                              className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t transition-all"
+                              style={{ height: `${Math.max((d.count / maxVal) * 100, 3)}%` }}
+                            />
+                            <span className="text-[9px] text-gray-400 -rotate-45">{d.date.slice(5)}</span>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
