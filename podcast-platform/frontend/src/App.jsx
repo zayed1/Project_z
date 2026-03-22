@@ -20,9 +20,13 @@ const FollowsPage = lazy(() => import('./pages/FollowsPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const PlaylistsPage = lazy(() => import('./pages/PlaylistsPage'));
+const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
+import MiniPlayer from './components/MiniPlayer';
+import SeasonalTheme from './components/SeasonalTheme';
+import PageTransition from './components/PageTransition';
 
 function PageLoader() {
   return (
@@ -63,6 +67,12 @@ export default function App() {
               </svg>
               قوائم
             </Link>
+            <Link to="/creator" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+              </svg>
+              صانع المحتوى
+            </Link>
             <Link to="/follows" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -83,6 +93,7 @@ export default function App() {
 
             {/* اختيار الثيم | Theme Selector */}
             <div className="relative">
+              <SeasonalTheme />
               <button
                 onClick={() => setShowThemeMenu(!showThemeMenu)}
                 className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -147,6 +158,7 @@ export default function App() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/playlists" element={<PlaylistsPage />} />
+            <Route path="/creator" element={<CreatorDashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -157,6 +169,7 @@ export default function App() {
         <p>منصة البودكاست &copy; {new Date().getFullYear()}</p>
       </footer>
 
+      <MiniPlayer />
       <GlobalPlayer />
       <MiniPlayer />
     </div>

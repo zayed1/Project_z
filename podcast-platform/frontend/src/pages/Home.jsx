@@ -16,6 +16,9 @@ import HeroCarousel from '../components/HeroCarousel';
 import VoiceSearch from '../components/VoiceSearch';
 import SmartRecommendations from '../components/SmartRecommendations';
 import AdvancedSearch from '../components/AdvancedSearch';
+import MoodFilter from '../components/MoodFilter';
+import PodcastCarousel from '../components/PodcastCarousel';
+import ViewToggle from '../components/ViewToggle';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -25,6 +28,8 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [selectedMood, setSelectedMood] = useState(null);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('view_mode') || 'grid');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -196,14 +201,27 @@ export default function Home() {
       {/* إحصائيات المستمع | Listener Stats */}
       <ListenerStats />
 
+      {/* فلتر المزاج | Mood Filter */}
+      {!search && (
+        <div className="mb-6">
+          <MoodFilter onSelect={setSelectedMood} selectedMood={selectedMood} />
+        </div>
+      )}
+
+      {/* سلايدر البودكاست المميز | Featured Carousel */}
+      {!search && !selectedCategory && (
+        <PodcastCarousel title="بودكاست مميز" podcasts={podcasts.slice(0, 8)} />
+      )}
+
       {/* البودكاست الرائجة | Trending */}
       {!search && !selectedCategory && <TrendingPodcasts />}
 
       {/* الأكثر استماعاً | Popular */}
       {!search && !selectedCategory && <PopularEpisodes />}
 
-      {/* التصنيفات | Categories Filter */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* التصنيفات + تبديل العرض | Categories Filter + View Toggle */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <ViewToggle onChange={setViewMode} />
         <button
           onClick={() => setSelectedCategory('')}
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${

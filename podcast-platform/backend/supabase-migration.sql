@@ -375,6 +375,82 @@ ALTER TABLE ab_tests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "ab_tests_all" ON ab_tests FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================
+-- Batch 8: التعليقات الموقّتة | Timed Comments
+-- ============================================
+CREATE TABLE IF NOT EXISTS timed_comments (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  timestamp REAL NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_timed_comments_ep ON timed_comments(episode_id, timestamp);
+ALTER TABLE timed_comments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "timed_comments_all" ON timed_comments FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 8: تصنيف المزاج | Episode Moods
+-- ============================================
+CREATE TABLE IF NOT EXISTS episode_moods (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  mood TEXT NOT NULL
+);
+ALTER TABLE episode_moods ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "episode_moods_all" ON episode_moods FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 8: تفضيلات المستخدم | User Preferences
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  favorite_categories JSONB DEFAULT '[]',
+  favorite_moods JSONB DEFAULT '[]',
+  listen_frequency TEXT DEFAULT 'daily',
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "user_preferences_all" ON user_preferences FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 8: رسائل الترحيب | Welcome Messages
+-- ============================================
+CREATE TABLE IF NOT EXISTS welcome_messages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  podcast_id UUID NOT NULL UNIQUE REFERENCES podcasts(id) ON DELETE CASCADE,
+  message TEXT DEFAULT '',
+  enabled BOOLEAN DEFAULT TRUE
+);
+ALTER TABLE welcome_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "welcome_messages_all" ON welcome_messages FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 8: Webhooks
+-- ============================================
+CREATE TABLE IF NOT EXISTS webhooks (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  url TEXT NOT NULL,
+  events JSONB DEFAULT '[]',
+  secret TEXT NOT NULL,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS webhook_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  webhook_url TEXT,
+  event TEXT,
+  status TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE webhooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhook_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "webhooks_all" ON webhooks FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "webhook_logs_all" ON webhook_logs FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

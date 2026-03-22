@@ -27,6 +27,7 @@ import SocialShare from '../components/SocialShare';
 import DrivingMode from '../components/DrivingMode';
 import TTSPreview from '../components/TTSPreview';
 import ChapterMarkers from '../components/ChapterMarkers';
+import TimedComments from '../components/TimedComments';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -409,6 +410,9 @@ export default function PodcastDetail() {
 
                     {/* علامات الفصول | Chapter Markers */}
                     <ChapterMarkers episodeId={episode.id} />
+
+                    {/* تعليقات موقّتة | Timed Comments */}
+                    <TimedComments episodeId={episode.id} />
 
                     {/* استطلاع | Poll */}
                     <EpisodePoll episodeId={episode.id} />

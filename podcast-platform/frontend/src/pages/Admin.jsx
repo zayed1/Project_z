@@ -12,6 +12,8 @@ import GeoAnalytics from '../components/GeoAnalytics';
 import DashboardCharts from '../components/DashboardCharts';
 import DataExport from '../components/DataExport';
 import ABTestManager from '../components/ABTestManager';
+import SystemHealth from '../components/SystemHealth';
+import WebhookManager from '../components/WebhookManager';
 
 export default function Admin() {
   const { user, login, logout, loading: authLoading } = useAuth();
@@ -401,10 +403,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'charts', 'scheduler', 'geo', 'ab-test', 'export', 'categories', 'rss', 'broadcast', 'users', 'logs'].map((t) => (
+        {['podcasts', 'stats', 'charts', 'scheduler', 'geo', 'ab-test', 'export', 'webhooks', 'health', 'categories', 'rss', 'broadcast', 'users', 'logs'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', charts: 'الرسوم البيانية', scheduler: 'الجدولة', geo: 'الجغرافية', 'ab-test': 'A/B Testing', export: 'التصدير', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', charts: 'الرسوم البيانية', scheduler: 'الجدولة', geo: 'الجغرافية', 'ab-test': 'A/B Testing', export: 'التصدير', webhooks: 'Webhooks', health: 'صحة النظام', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
           </button>
         ))}
       </div>
@@ -618,6 +620,12 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Export Tab */}
       {tab === 'export' && <DataExport />}
+
+      {/* Webhooks Tab */}
+      {tab === 'webhooks' && <WebhookManager />}
+
+      {/* System Health Tab */}
+      {tab === 'health' && <SystemHealth />}
 
       {/* Scheduler Tab */}
       {tab === 'scheduler' && <VisualScheduler />}

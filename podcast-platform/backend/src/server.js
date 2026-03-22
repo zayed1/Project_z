@@ -45,6 +45,17 @@ const { getChapters, saveChapters } = require('./controllers/chaptersController'
 const { savePlaybackPosition, getPlaybackPosition, getAllPositions } = require('./controllers/syncController');
 const { createABTest, getVariant, recordClick, getABTests } = require('./controllers/abTestingController');
 const { exportUsers, exportStats } = require('./controllers/exportController');
+const { addTimedComment, getTimedComments, deleteTimedComment } = require('./controllers/timedCommentsController');
+const { setEpisodeMood, getEpisodeMoods, getByMood, getMoodList } = require('./controllers/moodController');
+const { savePreferences, getPreferences, getPersonalizedFeed } = require('./controllers/onboardingController');
+const { setWelcomeMessage, getWelcomeMessage } = require('./controllers/welcomeController');
+const { getBestPublishTimes } = require('./controllers/smartScheduleController');
+const { getCreatorStats } = require('./controllers/creatorDashboardController');
+const { createWebhook, getWebhooks, deleteWebhook, toggleWebhook, getWebhookLogs } = require('./controllers/webhooksController');
+const { getHealth, ping } = require('./controllers/systemHealthController');
+const { authLimiter, searchLimiter, uploadLimiter, smartLimiter } = require('./middleware/advancedRateLimit');
+const { graphqlHTTP } = require('express-graphql');
+const { schema, root } = require('./graphql/schema');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -182,6 +193,46 @@ app.post('/api/ab-tests/:testId/click', recordClick);
 // التصدير | Export
 app.get('/api/admin/export/users', authenticate, requireAdmin, exportUsers);
 app.get('/api/admin/export/stats', authenticate, requireAdmin, exportStats);
+
+// التعليقات الموقّتة | Timed Comments
+app.post('/api/timed-comments', authenticate, addTimedComment);
+app.get('/api/episodes/:episodeId/timed-comments', getTimedComments);
+app.delete('/api/timed-comments/:commentId', authenticate, deleteTimedComment);
+
+// المزاج | Mood Tags
+app.get('/api/moods', getMoodList);
+app.get('/api/moods/:mood/episodes', getByMood);
+app.get('/api/episodes/:episodeId/moods', getEpisodeMoods);
+app.put('/api/admin/episodes/:episodeId/moods', authenticate, requireAdmin, setEpisodeMood);
+
+// Onboarding وتفضيلات المستخدم | Onboarding & Preferences
+app.post('/api/me/preferences', authenticate, savePreferences);
+app.get('/api/me/preferences', authenticate, getPreferences);
+app.get('/api/me/personalized-feed', authenticate, getPersonalizedFeed);
+
+// رسالة ترحيب | Welcome Messages
+app.put('/api/podcasts/:podcastId/welcome', authenticate, setWelcomeMessage);
+app.get('/api/podcasts/:podcastId/welcome', getWelcomeMessage);
+
+// جدول نشر ذكي | Smart Schedule
+app.get('/api/podcasts/:podcastId/best-times', authenticate, getBestPublishTimes);
+
+// لوحة صانع المحتوى | Creator Dashboard
+app.get('/api/me/creator-stats', authenticate, getCreatorStats);
+
+// Webhooks (مشرف) | Webhooks (admin)
+app.post('/api/admin/webhooks', authenticate, requireAdmin, createWebhook);
+app.get('/api/admin/webhooks', authenticate, requireAdmin, getWebhooks);
+app.delete('/api/admin/webhooks/:webhookId', authenticate, requireAdmin, deleteWebhook);
+app.put('/api/admin/webhooks/:webhookId/toggle', authenticate, requireAdmin, toggleWebhook);
+app.get('/api/admin/webhook-logs', authenticate, requireAdmin, getWebhookLogs);
+
+// صحة النظام | System Health
+app.get('/api/admin/system-health', authenticate, requireAdmin, getHealth);
+app.get('/api/ping', ping);
+
+// GraphQL
+app.use('/graphql', graphqlHTTP({ schema, rootValue: root, graphiql: process.env.NODE_ENV !== 'production' }));
 
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);

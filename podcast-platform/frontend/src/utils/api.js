@@ -148,6 +148,13 @@ export const adminAPI = {
   getABTests: () => api.get('/admin/ab-tests'),
   createABTest: (data) => api.post('/admin/ab-tests', data),
   saveChapters: (episodeId, chapters) => api.put(`/admin/episodes/${episodeId}/chapters`, { chapters }),
+  getSystemHealth: () => api.get('/admin/system-health'),
+  getWebhooks: () => api.get('/admin/webhooks'),
+  createWebhook: (data) => api.post('/admin/webhooks', data),
+  deleteWebhook: (id) => api.delete(`/admin/webhooks/${id}`),
+  toggleWebhook: (id) => api.put(`/admin/webhooks/${id}/toggle`),
+  getWebhookLogs: () => api.get('/admin/webhook-logs'),
+  setEpisodeMoods: (episodeId, moods) => api.put(`/admin/episodes/${episodeId}/moods`, { moods }),
 };
 
 // قوائم التشغيل | Playlists
@@ -176,6 +183,33 @@ export const syncAPI = {
   save: (data) => api.post('/me/sync', data),
   get: (episodeId) => api.get(`/me/sync/${episodeId}`),
   getAll: () => api.get('/me/sync'),
+};
+
+// التعليقات الموقّتة | Timed Comments
+export const timedCommentsAPI = {
+  add: (data) => api.post('/timed-comments', data),
+  getForEpisode: (episodeId) => api.get(`/episodes/${episodeId}/timed-comments`),
+  delete: (id) => api.delete(`/timed-comments/${id}`),
+};
+
+// المزاج | Moods
+export const moodsAPI = {
+  getList: () => api.get('/moods'),
+  getByMood: (mood) => api.get(`/moods/${mood}/episodes`),
+  getForEpisode: (episodeId) => api.get(`/episodes/${episodeId}/moods`),
+};
+
+// التفضيلات | Preferences
+export const preferencesAPI = {
+  save: (data) => api.post('/me/preferences', data),
+  get: () => api.get('/me/preferences'),
+  getFeed: () => api.get('/me/personalized-feed'),
+};
+
+// صانع المحتوى | Creator
+export const creatorAPI = {
+  getStats: () => api.get('/me/creator-stats'),
+  getBestTimes: (podcastId) => api.get(`/podcasts/${podcastId}/best-times`),
 };
 
 export default api;
