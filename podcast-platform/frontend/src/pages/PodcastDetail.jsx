@@ -28,6 +28,8 @@ import DrivingMode from '../components/DrivingMode';
 import TTSPreview from '../components/TTSPreview';
 import ChapterMarkers from '../components/ChapterMarkers';
 import TimedComments from '../components/TimedComments';
+import EpisodeNotes from '../components/EpisodeNotes';
+import FocusMode from '../components/FocusMode';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -414,6 +416,9 @@ export default function PodcastDetail() {
                     {/* تعليقات موقّتة | Timed Comments */}
                     <TimedComments episodeId={episode.id} />
 
+                    {/* ملاحظات شخصية | Episode Notes */}
+                    <EpisodeNotes episodeId={episode.id} />
+
                     {/* استطلاع | Poll */}
                     <EpisodePoll episodeId={episode.id} />
                   </div>
@@ -466,6 +471,9 @@ export default function PodcastDetail() {
           </div>
         )}
       </div>
+
+      {/* وضع التركيز | Focus Mode */}
+      <FocusMode />
 
       {/* بودكاست مقترحة | Suggested Podcasts */}
       <SuggestedPodcasts podcastId={id} />

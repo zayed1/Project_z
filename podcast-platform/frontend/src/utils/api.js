@@ -124,6 +124,14 @@ export const profileAPI = {
   update: (data) => api.put('/me/profile', data),
 };
 
+// ملاحظات الحلقات | Episode Notes
+export const notesAPI = {
+  save: (episodeId, data) => api.post(`/me/notes/${episodeId}`, data),
+  get: (episodeId) => api.get(`/me/notes/${episodeId}`),
+  getAll: () => api.get('/me/notes'),
+  delete: (noteId) => api.delete(`/me/notes/${noteId}`),
+};
+
 // المشرف | Admin
 export const adminAPI = {
   getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
@@ -149,6 +157,16 @@ export const adminAPI = {
   createABTest: (data) => api.post('/admin/ab-tests', data),
   saveChapters: (episodeId, chapters) => api.put(`/admin/episodes/${episodeId}/chapters`, { chapters }),
   getSystemHealth: () => api.get('/admin/system-health'),
+  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
+  getWeeklyReport: () => api.get('/admin/weekly-report'),
+  getComments: (params) => api.get('/admin/comments', { params }),
+  bulkDeleteComments: (ids) => api.post('/admin/comments/bulk-delete', { ids }),
+  getTemplates: () => api.get('/admin/templates'),
+  createTemplate: (data) => api.post('/admin/templates', data),
+  updateTemplate: (id, data) => api.put(`/admin/templates/${id}`, data),
+  deleteTemplate: (id) => api.delete(`/admin/templates/${id}`),
+  getSettings: () => api.get('/settings'),
+  updateSettings: (data) => api.put('/admin/settings', data),
   getWebhooks: () => api.get('/admin/webhooks'),
   createWebhook: (data) => api.post('/admin/webhooks', data),
   deleteWebhook: (id) => api.delete(`/admin/webhooks/${id}`),

@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { usePlayer } from '../context/PlayerContext';
+import ExportListenHistory from '../components/ExportListenHistory';
+import ListenStats from '../components/ListenStats';
 
 export default function HistoryPage() {
   const { playEpisode } = usePlayer();
@@ -51,18 +53,24 @@ export default function HistoryPage() {
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">سجل الاستماع</h1>
-        {history.length > 0 && (
-          <button
-            onClick={clearHistory}
-            className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            مسح السجل
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {history.length > 0 && <ExportListenHistory />}
+          {history.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              مسح السجل
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* إحصائيات الاستماع | Listen Stats */}
+      {history.length > 0 && <ListenStats />}
 
       {history.length === 0 ? (
         <div className="text-center py-16 text-gray-500 dark:text-gray-400">

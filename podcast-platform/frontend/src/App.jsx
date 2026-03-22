@@ -9,6 +9,10 @@ import { usePlayer } from './context/PlayerContext';
 import GlobalPlayer from './components/GlobalPlayer';
 import MiniPlayer from './components/MiniPlayer';
 import NotificationBell from './components/NotificationBell';
+import ErrorBoundary from './components/ErrorBoundary';
+import ProgressBar from './components/ProgressBar';
+import Footer from './components/Footer';
+import Breadcrumbs from './components/Breadcrumbs';
 
 // Code Splitting - تحميل كسول | Lazy Loading Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -24,7 +28,6 @@ const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
-import MiniPlayer from './components/MiniPlayer';
 import SeasonalTheme from './components/SeasonalTheme';
 import PageTransition from './components/PageTransition';
 
@@ -43,7 +46,9 @@ export default function App() {
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <ProgressBar />
       {/* شريط التنقل | Navigation Bar */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-2 bg-primary-500 text-white px-4 py-2 rounded-lg z-[60]">تخطي إلى المحتوى</a>
       <nav className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 transition-colors" role="navigation" aria-label="التنقل الرئيسي">
@@ -148,6 +153,7 @@ export default function App() {
       </nav>
 
       <main className={`max-w-6xl mx-auto px-4 py-8 ${currentEpisode ? 'pb-28' : ''}`} role="main">
+        <Breadcrumbs />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -165,13 +171,11 @@ export default function App() {
         </Suspense>
       </main>
 
-      <footer className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16 py-6 text-center text-sm text-gray-500 dark:text-gray-400 transition-colors ${currentEpisode ? 'mb-20' : ''}`}>
-        <p>منصة البودكاست &copy; {new Date().getFullYear()}</p>
-      </footer>
+      <Footer />
 
       <MiniPlayer />
       <GlobalPlayer />
-      <MiniPlayer />
     </div>
+    </ErrorBoundary>
   );
 }

@@ -451,6 +451,65 @@ CREATE POLICY "webhooks_all" ON webhooks FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "webhook_logs_all" ON webhook_logs FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================
+-- ============================================
+-- Batch 9: ملاحظات الحلقات | Episode Notes
+-- ============================================
+CREATE TABLE IF NOT EXISTS episode_notes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  timestamp REAL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE episode_notes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "episode_notes_all" ON episode_notes FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 9: سجل التعديلات | Audit Logs
+-- ============================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_type TEXT,
+  target_id TEXT,
+  details JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "audit_logs_all" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 9: إعدادات الموقع | Site Settings
+-- ============================================
+CREATE TABLE IF NOT EXISTS site_settings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  site_name TEXT DEFAULT 'منصة البودكاست',
+  description TEXT DEFAULT '',
+  logo_url TEXT DEFAULT '',
+  primary_color TEXT DEFAULT '#6366f1',
+  maintenance_mode BOOLEAN DEFAULT FALSE
+);
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "site_settings_all" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- Batch 9: قوالب الرسائل | Message Templates
+-- ============================================
+CREATE TABLE IF NOT EXISTS message_templates (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT NOT NULL,
+  title TEXT DEFAULT '',
+  body TEXT NOT NULL,
+  type TEXT DEFAULT 'notification',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE message_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "message_templates_all" ON message_templates FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

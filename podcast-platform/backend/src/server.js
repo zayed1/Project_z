@@ -56,6 +56,12 @@ const { getHealth, ping } = require('./controllers/systemHealthController');
 const { authLimiter, searchLimiter, uploadLimiter, smartLimiter } = require('./middleware/advancedRateLimit');
 const { graphqlHTTP } = require('express-graphql');
 const { schema, root } = require('./graphql/schema');
+const { saveNote, getNotes, deleteNote, getAllNotes } = require('./controllers/notesController');
+const { logAction, getAuditLogs } = require('./controllers/auditController');
+const { getSettings, updateSettings } = require('./controllers/siteSettingsController');
+const { bulkDeleteComments, getFilteredComments } = require('./controllers/bulkCommentsController');
+const { createTemplate, getTemplates, updateTemplate, deleteTemplate } = require('./controllers/messageTemplatesController');
+const { getWeeklyReport } = require('./controllers/weeklyReportController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -230,6 +236,32 @@ app.get('/api/admin/webhook-logs', authenticate, requireAdmin, getWebhookLogs);
 // صحة النظام | System Health
 app.get('/api/admin/system-health', authenticate, requireAdmin, getHealth);
 app.get('/api/ping', ping);
+
+// ملاحظات الحلقات | Episode Notes
+app.post('/api/me/notes', authenticate, saveNote);
+app.get('/api/me/notes', authenticate, getAllNotes);
+app.get('/api/me/notes/:episodeId', authenticate, getNotes);
+app.delete('/api/me/notes/:noteId', authenticate, deleteNote);
+
+// سجل التعديلات | Audit Logs
+app.get('/api/admin/audit-logs', authenticate, requireAdmin, getAuditLogs);
+
+// إعدادات الموقع | Site Settings
+app.get('/api/settings', getSettings);
+app.put('/api/admin/settings', authenticate, requireAdmin, updateSettings);
+
+// إدارة التعليقات المجمّعة | Bulk Comments
+app.get('/api/admin/comments', authenticate, requireAdmin, getFilteredComments);
+app.post('/api/admin/comments/bulk-delete', authenticate, requireAdmin, bulkDeleteComments);
+
+// قوالب الرسائل | Message Templates
+app.post('/api/admin/templates', authenticate, requireAdmin, createTemplate);
+app.get('/api/admin/templates', authenticate, requireAdmin, getTemplates);
+app.put('/api/admin/templates/:templateId', authenticate, requireAdmin, updateTemplate);
+app.delete('/api/admin/templates/:templateId', authenticate, requireAdmin, deleteTemplate);
+
+// التقرير الأسبوعي | Weekly Report
+app.get('/api/admin/weekly-report', authenticate, requireAdmin, getWeeklyReport);
 
 // GraphQL
 app.use('/graphql', graphqlHTTP({ schema, rootValue: root, graphiql: process.env.NODE_ENV !== 'production' }));

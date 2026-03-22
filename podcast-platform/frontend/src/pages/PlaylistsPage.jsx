@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import PlaylistDuration from '../components/PlaylistDuration';
 
 export default function PlaylistsPage() {
   const { user } = useAuth();
@@ -110,7 +111,10 @@ export default function PlaylistsPage() {
         <div className="md:col-span-2">
           {selected ? (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-              <h2 className="font-bold text-gray-800 dark:text-gray-100 mb-3">{selected.name}</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-bold text-gray-800 dark:text-gray-100">{selected.name}</h2>
+                <PlaylistDuration episodes={items.map((i) => i.episodes).filter(Boolean)} />
+              </div>
               {items.length === 0 ? (
                 <p className="text-gray-400 text-sm text-center py-8">لا توجد حلقات في هذه القائمة</p>
               ) : (
