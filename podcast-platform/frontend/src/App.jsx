@@ -1,22 +1,33 @@
 // ============================================
 // التطبيق الرئيسي | Main App Component
-// مع ثيمات متعددة + مشغل مصغر
+// مع ثيمات متعددة + مشغل مصغر + Code Splitting
 // ============================================
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { usePlayer } from './context/PlayerContext';
 import GlobalPlayer from './components/GlobalPlayer';
 import MiniPlayer from './components/MiniPlayer';
-import Home from './pages/Home';
-import PodcastDetail from './pages/PodcastDetail';
-import About from './pages/About';
-import ListenLaterPage from './pages/ListenLaterPage';
-import Admin from './pages/Admin';
-import FollowsPage from './pages/FollowsPage';
-import HistoryPage from './pages/HistoryPage';
 import NotificationBell from './components/NotificationBell';
-import NotFound from './pages/NotFound';
+
+// Code Splitting - تحميل كسول | Lazy Loading Pages
+const Home = lazy(() => import('./pages/Home'));
+const PodcastDetail = lazy(() => import('./pages/PodcastDetail'));
+const About = lazy(() => import('./pages/About'));
+const ListenLaterPage = lazy(() => import('./pages/ListenLaterPage'));
+const Admin = lazy(() => import('./pages/Admin'));
+const FollowsPage = lazy(() => import('./pages/FollowsPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]" role="status" aria-label="جاري التحميل">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500" />
+    </div>
+  );
+}
 
 export default function App() {
   const { dark, toggleTheme, colorTheme, changeColorTheme, themes } = useTheme();
@@ -26,7 +37,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* شريط التنقل | Navigation Bar */}
-      <nav className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 transition-colors">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-2 bg-primary-500 text-white px-4 py-2 rounded-lg z-[60]">تخطي إلى المحتوى</a>
+      <nav className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 transition-colors" role="navigation" aria-label="التنقل الرئيسي">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400">
             منصة البودكاست
@@ -114,17 +126,20 @@ export default function App() {
         </div>
       </nav>
 
-      <main className={`max-w-6xl mx-auto px-4 py-8 ${currentEpisode ? 'pb-28' : ''}`}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/podcast/:id" element={<PodcastDetail />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/listen-later" element={<ListenLaterPage />} />
-          <Route path="/follows" element={<FollowsPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+      <main className={`max-w-6xl mx-auto px-4 py-8 ${currentEpisode ? 'pb-28' : ''}`} role="main">
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/podcast/:id" element={<PodcastDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/listen-later" element={<ListenLaterPage />} />
+            <Route path="/follows" element={<FollowsPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <footer className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16 py-6 text-center text-sm text-gray-500 dark:text-gray-400 transition-colors ${currentEpisode ? 'mb-20' : ''}`}>

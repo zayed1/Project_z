@@ -202,6 +202,81 @@ CREATE POLICY "notifications_insert" ON notifications FOR INSERT WITH CHECK (tru
 CREATE POLICY "notifications_update" ON notifications FOR UPDATE USING (true);
 
 -- ============================================
+-- Batch 6: حقول الملف الشخصي | Profile fields
+-- ============================================
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT '';
+
+-- ============================================
+-- Batch 6: المقاطع المميزة | Clips Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS clips (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  title TEXT,
+  start_time REAL NOT NULL,
+  end_time REAL NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_clips_episode_id ON clips(episode_id);
+ALTER TABLE clips ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "clips_read" ON clips FOR SELECT USING (true);
+CREATE POLICY "clips_insert" ON clips FOR INSERT WITH CHECK (true);
+CREATE POLICY "clips_delete" ON clips FOR DELETE USING (true);
+
+-- ============================================
+-- Batch 6: الاستطلاعات | Polls Tables
+-- ============================================
+CREATE TABLE IF NOT EXISTS polls (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID NOT NULL REFERENCES episodes(id) ON DELETE CASCADE,
+  question TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS poll_options (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  poll_id UUID NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  order_num INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  poll_id UUID NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+  option_id UUID NOT NULL REFERENCES poll_options(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(poll_id, user_id)
+);
+ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poll_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "polls_read" ON polls FOR SELECT USING (true);
+CREATE POLICY "polls_insert" ON polls FOR INSERT WITH CHECK (true);
+CREATE POLICY "poll_options_read" ON poll_options FOR SELECT USING (true);
+CREATE POLICY "poll_options_insert" ON poll_options FOR INSERT WITH CHECK (true);
+CREATE POLICY "poll_votes_read" ON poll_votes FOR SELECT USING (true);
+CREATE POLICY "poll_votes_insert" ON poll_votes FOR INSERT WITH CHECK (true);
+
+-- ============================================
+-- Batch 6: الاستماع الجغرافي | Geo Listens
+-- ============================================
+CREATE TABLE IF NOT EXISTS geo_listens (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  episode_id UUID REFERENCES episodes(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  country TEXT,
+  city TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_geo_listens_country ON geo_listens(country);
+ALTER TABLE geo_listens ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "geo_listens_read" ON geo_listens FOR SELECT USING (true);
+CREATE POLICY "geo_listens_insert" ON geo_listens FOR INSERT WITH CHECK (true);
+
+-- ============================================
 -- إنشاء Buckets للتخزين | Create Storage Buckets
 -- نفذ هذا من لوحة تحكم Supabase:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('podcast-audio', 'podcast-audio', true);

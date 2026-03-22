@@ -29,6 +29,13 @@ const { getReplies, addReply } = require('./controllers/nestedCommentsController
 const { getEpisodeAnalytics } = require('./controllers/episodeAnalyticsController');
 const { createCategory, updateCategory, deleteCategory } = require('./controllers/categoryController');
 const { sendBroadcast, getMyNotifications, markNotificationsRead } = require('./controllers/broadcastController');
+const { getPublicProfile, updateProfile } = require('./controllers/profileController');
+const { createClip, getEpisodeClips, deleteClip } = require('./controllers/clipsController');
+const { createPoll, getEpisodePoll, votePoll } = require('./controllers/pollsController');
+const { getRecommendations } = require('./controllers/recommendationsController');
+const { recordGeoListen, getGeoStats } = require('./controllers/geoAnalyticsController');
+const { getEmbedData, getEmbedPage } = require('./controllers/embedController');
+const { getScheduledEpisodes, updateSchedule } = require('./controllers/schedulerController');
 const { authenticate } = require('./middleware/auth');
 const { requireAdmin } = require('./middleware/admin');
 
@@ -88,6 +95,35 @@ app.delete('/api/admin/categories/:categoryId', authenticate, requireAdmin, dele
 app.post('/api/admin/broadcast', authenticate, requireAdmin, sendBroadcast);
 app.get('/api/me/notifications', authenticate, getMyNotifications);
 app.put('/api/me/notifications/read', authenticate, markNotificationsRead);
+
+// الملف الشخصي | Profile
+app.get('/api/profile/:username', getPublicProfile);
+app.put('/api/me/profile', authenticate, updateProfile);
+
+// المقاطع المميزة | Clips
+app.post('/api/clips', authenticate, createClip);
+app.get('/api/episodes/:episodeId/clips', getEpisodeClips);
+app.delete('/api/clips/:clipId', authenticate, deleteClip);
+
+// الاستطلاعات | Polls
+app.post('/api/admin/polls', authenticate, requireAdmin, createPoll);
+app.get('/api/episodes/:episodeId/poll', getEpisodePoll);
+app.post('/api/polls/:pollId/vote', authenticate, votePoll);
+
+// الاقتراحات الذكية | Smart Recommendations
+app.get('/api/me/recommendations', authenticate, getRecommendations);
+
+// الإحصائيات الجغرافية | Geo Analytics
+app.post('/api/episodes/:episodeId/geo', recordGeoListen);
+app.get('/api/admin/geo-stats', authenticate, requireAdmin, getGeoStats);
+
+// التضمين الخارجي | Embed
+app.get('/api/embed/:episodeId', getEmbedData);
+app.get('/embed/:episodeId', getEmbedPage);
+
+// الجدولة | Scheduler
+app.get('/api/admin/scheduler', authenticate, requireAdmin, getScheduledEpisodes);
+app.put('/api/admin/scheduler/:episodeId', authenticate, requireAdmin, updateSchedule);
 
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);

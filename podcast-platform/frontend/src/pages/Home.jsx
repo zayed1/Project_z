@@ -14,6 +14,7 @@ import ListenerStats from '../components/ListenerStats';
 import BadgesDisplay from '../components/BadgesDisplay';
 import HeroCarousel from '../components/HeroCarousel';
 import VoiceSearch from '../components/VoiceSearch';
+import SmartRecommendations from '../components/SmartRecommendations';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -186,6 +187,9 @@ export default function Home() {
 
       {/* شارات الإنجازات | Badges */}
       <BadgesDisplay />
+
+      {/* اقتراحات ذكية | Smart Recommendations */}
+      <SmartRecommendations />
 
       {/* إحصائيات المستمع | Listener Stats */}
       <ListenerStats />

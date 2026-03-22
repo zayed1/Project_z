@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { podcastsAPI, episodesAPI, adminAPI } from '../utils/api';
 import DragDropUpload from '../components/DragDropUpload';
+import VisualScheduler from '../components/VisualScheduler';
+import GeoAnalytics from '../components/GeoAnalytics';
 
 export default function Admin() {
   const { user, login, logout, loading: authLoading } = useAuth();
@@ -396,10 +398,10 @@ function AdminDashboard({ user, onLogout }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['podcasts', 'stats', 'categories', 'rss', 'broadcast', 'users', 'logs'].map((t) => (
+        {['podcasts', 'stats', 'scheduler', 'geo', 'categories', 'rss', 'broadcast', 'users', 'logs'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
-            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
+            {{ podcasts: 'إدارة المحتوى', stats: 'الإحصائيات', scheduler: 'الجدولة', geo: 'الجغرافية', categories: 'التصنيفات', rss: 'استيراد RSS', broadcast: 'رسائل جماعية', users: 'المستخدمين', logs: 'سجل النشاطات' }[t]}
           </button>
         ))}
       </div>
@@ -604,6 +606,12 @@ function AdminDashboard({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Scheduler Tab */}
+      {tab === 'scheduler' && <VisualScheduler />}
+
+      {/* Geo Analytics Tab */}
+      {tab === 'geo' && <GeoAnalytics />}
 
       {/* Category Management Tab */}
       {tab === 'categories' && (

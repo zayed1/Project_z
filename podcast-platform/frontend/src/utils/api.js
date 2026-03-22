@@ -105,6 +105,25 @@ export const notificationsAPI = {
   markRead: () => api.put('/me/notifications/read'),
 };
 
+// المقاطع | Clips
+export const clipsAPI = {
+  create: (data) => api.post('/clips', data),
+  getForEpisode: (episodeId) => api.get(`/episodes/${episodeId}/clips`),
+  delete: (clipId) => api.delete(`/clips/${clipId}`),
+};
+
+// الاستطلاعات | Polls
+export const pollsAPI = {
+  getForEpisode: (episodeId, userId) => api.get(`/episodes/${episodeId}/poll`, { params: { userId } }),
+  vote: (pollId, optionId) => api.post(`/polls/${pollId}/vote`, { option_id: optionId }),
+};
+
+// الملف الشخصي | Profile
+export const profileAPI = {
+  getPublic: (username) => api.get(`/profile/${username}`),
+  update: (data) => api.put('/me/profile', data),
+};
+
 // المشرف | Admin
 export const adminAPI = {
   getActivityLogs: (params) => api.get('/admin/activity-logs', { params }),
@@ -120,6 +139,10 @@ export const adminAPI = {
   updateCategory: (id, name) => api.put(`/admin/categories/${id}`, { name }),
   deleteCategory: (id) => api.delete(`/admin/categories/${id}`),
   sendBroadcast: (data) => api.post('/admin/broadcast', data),
+  getGeoStats: () => api.get('/admin/geo-stats'),
+  getScheduledEpisodes: (params) => api.get('/admin/scheduler', { params }),
+  updateSchedule: (episodeId, data) => api.put(`/admin/scheduler/${episodeId}`, data),
+  createPoll: (data) => api.post('/admin/polls', data),
 };
 
 export default api;

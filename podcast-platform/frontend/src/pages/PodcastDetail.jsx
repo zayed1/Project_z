@@ -19,6 +19,9 @@ import TimestampShare from '../components/TimestampShare';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CommentReplies from '../components/CommentReplies';
 import OfflineDownload from '../components/OfflineDownload';
+import ClipCreator from '../components/ClipCreator';
+import EpisodePoll from '../components/EpisodePoll';
+import EmbedCode from '../components/EmbedCode';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -365,6 +368,12 @@ export default function PodcastDetail() {
                         {/* مشاركة وقت محدد | Timestamp Share */}
                         <TimestampShare podcastId={id} episodeId={episode.id} />
 
+                        {/* مقطع مميز | Clip Creator */}
+                        <ClipCreator episodeId={episode.id} />
+
+                        {/* كود التضمين | Embed */}
+                        <EmbedCode episodeId={episode.id} />
+
                         {/* تعليقات | Comments toggle */}
                         <button onClick={() => toggleComments(episode.id)}
                           className={`p-1.5 rounded-lg transition-colors ${isCommentsOpen ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
@@ -378,6 +387,9 @@ export default function PodcastDetail() {
                     {episode.transcript && (
                       <TranscriptViewer transcript={episode.transcript} />
                     )}
+
+                    {/* استطلاع | Poll */}
+                    <EpisodePoll episodeId={episode.id} />
                   </div>
 
                   {/* قسم التعليقات | Comments Section */}
