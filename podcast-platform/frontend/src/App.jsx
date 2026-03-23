@@ -15,6 +15,7 @@ import Footer from './components/Footer';
 import Breadcrumbs from './components/Breadcrumbs';
 import ScrollToTop from './components/ScrollToTop';
 import WelcomeBanner from './components/WelcomeBanner';
+import OfflineBanner from './components/OfflineBanner';
 
 // Code Splitting - تحميل كسول | Lazy Loading Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -28,6 +29,7 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const PlaylistsPage = lazy(() => import('./pages/PlaylistsPage'));
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import useScrollRestore from './hooks/useScrollRestore';
@@ -91,6 +93,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <OfflineBanner />
       <ProgressBar />
       {/* شريط التنقل | Navigation Bar */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-2 bg-primary-500 text-white px-4 py-2 rounded-lg z-[60]">تخطي إلى المحتوى</a>
@@ -218,19 +221,22 @@ export default function App() {
         <Breadcrumbs />
         <WelcomeBanner />
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/podcast/:id" element={<PodcastDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/listen-later" element={<ListenLaterPage />} />
-            <Route path="/follows" element={<FollowsPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/profile/:username" element={<ProfilePage />} />
-            <Route path="/playlists" element={<PlaylistsPage />} />
-            <Route path="/creator" element={<CreatorDashboard />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <PageTransition>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/podcast/:id" element={<PodcastDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/listen-later" element={<ListenLaterPage />} />
+              <Route path="/follows" element={<FollowsPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
+              <Route path="/playlists" element={<PlaylistsPage />} />
+              <Route path="/creator" element={<CreatorDashboard />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PageTransition>
         </Suspense>
       </main>
 

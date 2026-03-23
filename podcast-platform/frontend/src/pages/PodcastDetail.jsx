@@ -41,6 +41,9 @@ import NowPlayingIndicator from '../components/NowPlayingIndicator';
 import EpisodeProgressBar from '../components/EpisodeProgressBar';
 import EpisodeActions from '../components/EpisodeActions';
 import EmptyState from '../components/EmptyState';
+import EpisodeProgressRing from '../components/EpisodeProgressRing';
+import SwipeableCard from '../components/SwipeableCard';
+import Reactions from '../components/Reactions';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -332,7 +335,14 @@ export default function PodcastDetail() {
               const isCommentsOpen = showComments[episode.id];
 
               return (
-                <div key={episode.id} className={`rounded-lg border transition-colors ${
+                <SwipeableCard
+                  key={episode.id}
+                  onSwipeRight={() => toggleListenLater(episode)}
+                  onSwipeLeft={null}
+                  rightLabel={listenLaterIds.has(episode.id) ? 'إزالة من القائمة' : 'استمع لاحقاً'}
+                  rightColor={listenLaterIds.has(episode.id) ? 'bg-orange-500' : 'bg-primary-500'}
+                >
+                <div className={`rounded-lg border transition-colors ${
                   active ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'
                 }`}>
                   <div className="p-4">
@@ -341,13 +351,20 @@ export default function PodcastDetail() {
                         onClick={() => playEpisode(episode, podcast.title, allEpisodes)}
                         className="flex items-center gap-3 flex-1 text-right min-w-0"
                       >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          active ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
-                        }`}>
-                          {active ? (
-                            <NowPlayingIndicator isPlaying={isPlaying} />
-                          ) : (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <div className="relative flex-shrink-0">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            active ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                          }`}>
+                            {active ? (
+                              <NowPlayingIndicator isPlaying={isPlaying} />
+                            ) : (
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            )}
+                          </div>
+                          {!active && (
+                            <div className="absolute -top-1 -left-1">
+                              <EpisodeProgressRing episodeId={episode.id} duration={episode.duration} size={16} />
+                            </div>
                           )}
                         </div>
                         <div className="min-w-0">
@@ -367,6 +384,7 @@ export default function PodcastDetail() {
                           <>
                             {episode.listen_count > 0 && <span className="text-xs text-gray-400">{episode.listen_count}</span>}
                             <LikeDislike episodeId={episode.id} />
+                            <Reactions episodeId={episode.id} compact />
                             <button onClick={() => downloadEpisode(episode)}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors" title="تحميل">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -433,6 +451,11 @@ export default function PodcastDetail() {
 
                     {/* استطلاع | Poll */}
                     <EpisodePoll episodeId={episode.id} />
+
+                    {/* ردود الفعل | Reactions */}
+                    <div className="mt-2">
+                      <Reactions episodeId={episode.id} />
+                    </div>
                   </div>
 
                   {/* قسم التعليقات | Comments Section */}
@@ -478,6 +501,7 @@ export default function PodcastDetail() {
                     </div>
                   )}
                 </div>
+                </SwipeableCard>
               );
             })}
           </div>

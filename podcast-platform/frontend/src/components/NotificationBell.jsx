@@ -2,6 +2,7 @@
 // مكون الإشعارات | Notifications Component
 // ============================================
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -69,8 +70,11 @@ export default function NotificationBell() {
 
       {open && (
         <div className="absolute top-full mt-2 left-0 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
-          <div className="p-3 border-b dark:border-gray-700">
+          <div className="p-3 border-b dark:border-gray-700 flex items-center justify-between">
             <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm">الإشعارات</h3>
+            <Link to="/notifications" onClick={() => setOpen(false)} className="text-xs text-primary-500 hover:text-primary-600">
+              عرض الكل
+            </Link>
           </div>
           {notifications.length === 0 ? (
             <div className="p-6 text-center text-gray-400 text-sm">لا توجد إشعارات</div>
