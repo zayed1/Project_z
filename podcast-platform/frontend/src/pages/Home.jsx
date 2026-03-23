@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import { podcastsAPI } from '../utils/api';
 import PodcastCard from '../components/PodcastCard';
 import { PodcastCardSkeleton } from '../components/EnhancedSkeleton';
+import EmptyState from '../components/EmptyState';
 import TrendingPodcasts from '../components/TrendingPodcasts';
 import PopularEpisodes from '../components/PopularEpisodes';
 import ListenerStats from '../components/ListenerStats';
@@ -21,6 +22,7 @@ import PodcastCarousel from '../components/PodcastCarousel';
 import ViewToggle from '../components/ViewToggle';
 import WeeklyChallenges from '../components/WeeklyChallenges';
 import ListenTimeRecommender from '../components/ListenTimeRecommender';
+import ContinueListening from '../components/ContinueListening';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -194,6 +196,9 @@ export default function Home() {
         )}
       </div>
 
+      {/* أكمل الاستماع | Continue Listening */}
+      {!search && <ContinueListening />}
+
       {/* شارات الإنجازات | Badges */}
       <BadgesDisplay />
 
@@ -264,12 +269,13 @@ export default function Home() {
           {[...Array(8)].map((_, i) => <PodcastCardSkeleton key={i} />)}
         </div>
       ) : podcasts.length === 0 ? (
-        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM8 12a4 4 0 0 0 8 0h2a6 6 0 0 1-5 5.91V21h-2v-3.09A6 6 0 0 1 6 12h2z" />
-          </svg>
-          <p className="text-lg">{search ? 'لا توجد نتائج' : 'لا يوجد بودكاست حالياً'}</p>
-        </div>
+        <EmptyState
+          icon={search ? 'search' : 'podcast'}
+          title={search ? 'لا توجد نتائج' : 'لا يوجد بودكاست حالياً'}
+          message={search ? `لم نعثر على نتائج لـ "${search}". جرّب كلمات بحث مختلفة` : 'لم يتم إضافة أي بودكاست بعد. كن أول من يضيف!'}
+          action={search ? () => { setSearch(''); setSearchInput(''); } : undefined}
+          actionLabel={search ? 'مسح البحث' : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {podcasts.map((podcast, i) => (

@@ -13,6 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ProgressBar from './components/ProgressBar';
 import Footer from './components/Footer';
 import Breadcrumbs from './components/Breadcrumbs';
+import ScrollToTop from './components/ScrollToTop';
 
 // Code Splitting - تحميل كسول | Lazy Loading Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -175,6 +176,7 @@ export default function App() {
 
       <Footer />
 
+      <ScrollToTop />
       <MiniPlayer />
       <GlobalPlayer />
     </div>

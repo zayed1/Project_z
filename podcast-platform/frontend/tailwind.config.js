@@ -21,6 +21,11 @@ export default {
           900: '#0c4a6e',
         },
       },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
     },
   },
   plugins: [],
