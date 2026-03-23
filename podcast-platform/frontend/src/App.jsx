@@ -3,7 +3,7 @@
 // مع ثيمات متعددة + مشغل مصغر + Code Splitting
 // ============================================
 import { useState, lazy, Suspense } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
 import { usePlayer } from './context/PlayerContext';
 import GlobalPlayer from './components/GlobalPlayer';
@@ -14,6 +14,7 @@ import ProgressBar from './components/ProgressBar';
 import Footer from './components/Footer';
 import Breadcrumbs from './components/Breadcrumbs';
 import ScrollToTop from './components/ScrollToTop';
+import WelcomeBanner from './components/WelcomeBanner';
 
 // Code Splitting - تحميل كسول | Lazy Loading Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -41,12 +42,51 @@ function PageLoader() {
   );
 }
 
+// روابط التنقل | Navigation links config
+const NAV_LINKS = [
+  { to: '/', label: 'الرئيسية', exact: true },
+  { to: '/listen-later', label: 'قائمتي', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /> },
+  { to: '/playlists', label: 'قوائم', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /> },
+  { to: '/creator', label: 'صانع المحتوى', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /> },
+  { to: '/follows', label: 'متابعاتي', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /> },
+  { to: '/history', label: 'السجل', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+  { to: '/about', label: 'عن المنصة' },
+];
+
+function NavLink({ to, label, icon, exact, onClick }) {
+  const location = useLocation();
+  const isActive = exact ? location.pathname === to : location.pathname.startsWith(to);
+
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-1 transition-colors relative ${
+        isActive
+          ? 'text-primary-600 dark:text-primary-400 font-medium'
+          : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+      }`}
+    >
+      {icon && (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {icon}
+        </svg>
+      )}
+      {label}
+      {isActive && (
+        <span className="absolute -bottom-3 left-0 right-0 h-0.5 bg-primary-500 rounded-full hidden md:block" />
+      )}
+    </Link>
+  );
+}
+
 export default function App() {
   const { dark, toggleTheme, colorTheme, changeColorTheme, themes } = useTheme();
   const { currentEpisode } = usePlayer();
   useKeyboardShortcuts();
   useScrollRestore();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <ErrorBoundary>
@@ -59,43 +99,12 @@ export default function App() {
           <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400">
             منصة البودكاست
           </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-              الرئيسية
-            </Link>
-            <Link to="/listen-later" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              قائمتي
-            </Link>
-            <Link to="/playlists" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              قوائم
-            </Link>
-            <Link to="/creator" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-              </svg>
-              صانع المحتوى
-            </Link>
-            <Link to="/follows" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              متابعاتي
-            </Link>
-            <Link to="/history" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              السجل
-            </Link>
-            <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-              عن المنصة
-            </Link>
+
+          {/* روابط سطح المكتب | Desktop Links */}
+          <div className="hidden md:flex items-center gap-4">
+            {NAV_LINKS.map((link) => (
+              <NavLink key={link.to} {...link} />
+            ))}
 
             <NotificationBell />
 
@@ -152,11 +161,62 @@ export default function App() {
               )}
             </div>
           </div>
+
+          {/* أزرار الموبايل | Mobile Buttons */}
+          <div className="flex items-center gap-2 md:hidden">
+            <NotificationBell />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="القائمة"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* قائمة الموبايل | Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+            <div className="px-4 py-3 space-y-1">
+              {NAV_LINKS.map((link) => (
+                <div key={link.to} className="py-1.5">
+                  <NavLink {...link} onClick={() => setMobileMenuOpen(false)} />
+                </div>
+              ))}
+              <hr className="border-gray-200 dark:border-gray-700 my-2" />
+              <button
+                onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-2 py-2 text-sm text-gray-600 dark:text-gray-300"
+              >
+                {dark ? (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/></svg>
+                    الوضع الفاتح
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+                    الوضع الليلي
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className={`max-w-6xl mx-auto px-4 py-8 ${currentEpisode ? 'pb-28' : ''}`} role="main">
         <Breadcrumbs />
+        <WelcomeBanner />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />

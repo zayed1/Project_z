@@ -39,6 +39,8 @@ import SimilarEpisodes from '../components/SimilarEpisodes';
 import FanWall from '../components/FanWall';
 import NowPlayingIndicator from '../components/NowPlayingIndicator';
 import EpisodeProgressBar from '../components/EpisodeProgressBar';
+import EpisodeActions from '../components/EpisodeActions';
+import EmptyState from '../components/EmptyState';
 import { DetailSkeleton } from '../components/EnhancedSkeleton';
 
 export default function PodcastDetail() {
@@ -192,10 +194,13 @@ export default function PodcastDetail() {
 
   if (error || !podcast) {
     return (
-      <div className="text-center py-16">
-        <p className="text-red-500 text-lg">{error || 'البودكاست غير موجود'}</p>
-        <Link to="/" className="text-primary-600 hover:underline mt-4 inline-block">العودة للرئيسية</Link>
-      </div>
+      <EmptyState
+        icon="podcast"
+        title={error || 'البودكاست غير موجود'}
+        message="تأكد من صحة الرابط أو عد للصفحة الرئيسية لاستكشاف بودكاست أخرى"
+        action={() => window.location.reload()}
+        actionLabel="إعادة المحاولة"
+      />
     );
   }
 
@@ -357,62 +362,42 @@ export default function PodcastDetail() {
                         </div>
                       </button>
 
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {episode.listen_count > 0 && <span className="text-xs text-gray-400">{episode.listen_count}</span>}
-
-                        {/* إعجاب | Like/Dislike */}
-                        <LikeDislike episodeId={episode.id} />
-
-                        {/* تحميل | Download */}
-                        <button onClick={() => downloadEpisode(episode)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors" title="تحميل">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        </button>
-
-                        {/* استمع لاحقاً | Listen Later */}
-                        <button onClick={() => toggleListenLater(episode)}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            listenLaterIds.has(episode.id) ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-                          }`} title={listenLaterIds.has(episode.id) ? 'إزالة' : 'استمع لاحقاً'}>
-                          <svg className="w-4 h-4" fill={listenLaterIds.has(episode.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        </button>
-
-                        {/* حفظ للاستماع بدون انترنت | Offline Download */}
+                      <EpisodeActions
+                        mainActions={
+                          <>
+                            {episode.listen_count > 0 && <span className="text-xs text-gray-400">{episode.listen_count}</span>}
+                            <LikeDislike episodeId={episode.id} />
+                            <button onClick={() => downloadEpisode(episode)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors" title="تحميل">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            </button>
+                            <button onClick={() => toggleListenLater(episode)}
+                              className={`p-1.5 rounded-lg transition-colors ${
+                                listenLaterIds.has(episode.id) ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              }`} title={listenLaterIds.has(episode.id) ? 'إزالة' : 'استمع لاحقاً'}>
+                              <svg className="w-4 h-4" fill={listenLaterIds.has(episode.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                              </svg>
+                            </button>
+                            <button onClick={() => toggleComments(episode.id)}
+                              className={`p-1.5 rounded-lg transition-colors ${isCommentsOpen ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                              title="التعليقات">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                            </button>
+                          </>
+                        }
+                      >
+                        {/* الإجراءات الثانوية في dropdown | Secondary actions in dropdown */}
                         <OfflineDownload audioUrl={episode.audio_file_url} />
-
-                        {/* مشاركة وقت محدد | Timestamp Share */}
                         <TimestampShare podcastId={id} episodeId={episode.id} />
-
-                        {/* مقطع مميز | Clip Creator */}
                         <ClipCreator episodeId={episode.id} />
-
-                        {/* كود التضمين | Embed */}
                         <EmbedCode episodeId={episode.id} />
-
-                        {/* مشاركة اجتماعية | Social Share */}
                         <SocialShare title={episode.title} url={`${window.location.origin}/podcast/${id}?ep=${episode.id}`} />
-
-                        {/* قراءة الوصف | TTS Preview */}
                         <TTSPreview text={episode.description} />
-
-                        {/* إهداء | Gift */}
                         <GiftEpisode episodeId={episode.id} episodeTitle={episode.title} />
-
-                        {/* مشاركة لحظة | Moment Share */}
                         <MomentShare episodeId={episode.id} episodeTitle={episode.title} coverUrl={podcast.cover_image_url} />
-
-                        {/* وضع القيادة | Driving Mode */}
                         <DrivingMode />
-
-                        {/* تعليقات | Comments toggle */}
-                        <button onClick={() => toggleComments(episode.id)}
-                          className={`p-1.5 rounded-lg transition-colors ${isCommentsOpen ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                          title="التعليقات">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                        </button>
-                      </div>
+                      </EpisodeActions>
                     </div>
 
                     {/* النص المكتوب | Transcript */}

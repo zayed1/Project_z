@@ -3,7 +3,7 @@
 // مع الوقت المتبقي + Buffer progress + اختصارات لوحة المفاتيح
 // ============================================
 import { usePlayer } from '../context/PlayerContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DrivingMode from './DrivingMode';
 import AudioEqualizer from './AudioEqualizer';
 import PlayQueue from './PlayQueue';
@@ -21,7 +21,7 @@ function formatTime(s) {
 export default function GlobalPlayer() {
   const {
     currentEpisode, podcastTitle, isPlaying, currentTime, duration, playbackRate,
-    hasNext, hasPrev, sleepTimer, audioRef,
+    hasNext, hasPrev, sleepTimer, audioRef, volume, setVolume,
     togglePlay, seek, skipForward, skipBackward, changeSpeed,
     playNext, playPrev, startSleepTimer, cancelSleepTimer,
   } = usePlayer();
@@ -29,8 +29,10 @@ export default function GlobalPlayer() {
   const [showSpeed, setShowSpeed] = useState(false);
   const [showSleep, setShowSleep] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showVolume, setShowVolume] = useState(false);
   const [drivingMode, setDrivingMode] = useState(false);
   const [buffered, setBuffered] = useState(0);
+  const volumeRef = useRef(null);
 
   // تتبع Buffer progress | Track buffer progress
   useEffect(() => {
@@ -136,6 +138,44 @@ export default function GlobalPlayer() {
               <span className="text-primary-500 dark:text-primary-400" title="الوقت المتبقي">
                 -{formatTime(remaining)}
               </span>
+            </div>
+
+            {/* شريط الصوت | Volume Slider */}
+            <div className="relative" ref={volumeRef}>
+              <button
+                onClick={() => { setShowVolume(!showVolume); setShowSpeed(false); setShowSleep(false); setShowShortcuts(false); }}
+                className="bg-gray-100 dark:bg-gray-700 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title={`الصوت ${Math.round((volume || 1) * 100)}% (M للكتم)`}
+              >
+                {(volume || 1) === 0 ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                ) : (volume || 1) < 0.5 ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                )}
+              </button>
+              {showVolume && (
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 shadow-xl rounded-lg border dark:border-gray-700 p-3 flex flex-col items-center gap-2">
+                  <span className="text-[10px] text-gray-400 tabular-nums">{Math.round((volume || 1) * 100)}%</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={volume || 1}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="w-24 h-1.5 accent-primary-500 cursor-pointer"
+                    style={{ writingMode: 'horizontal-tb' }}
+                  />
+                  <button
+                    onClick={() => setVolume(volume > 0 ? 0 : 1)}
+                    className="text-[10px] text-gray-400 hover:text-primary-500"
+                  >
+                    {volume > 0 ? 'كتم' : 'إلغاء الكتم'}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* مؤقت النوم | Sleep Timer */}
