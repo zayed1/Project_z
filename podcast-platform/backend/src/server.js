@@ -328,6 +328,21 @@ app.all('/graphql', createHandler({ schema, rootValue: root }));
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
 
+// الصفحة الرئيسية | Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    name: 'منصة البودكاست API | Podcast Platform API',
+    status: 'running',
+    version: '2.0.0',
+    endpoints: {
+      health: '/api/health',
+      podcasts: '/api/podcasts',
+      episodes: '/api/episodes',
+      graphql: '/graphql',
+    },
+  });
+});
+
 // نقطة فحص صحة الخادم | Health Check
 app.get('/api/health', (req, res) => {
   res.json({
