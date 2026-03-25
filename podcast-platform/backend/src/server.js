@@ -54,7 +54,7 @@ const { getCreatorStats } = require('./controllers/creatorDashboardController');
 const { createWebhook, getWebhooks, deleteWebhook, toggleWebhook, getWebhookLogs } = require('./controllers/webhooksController');
 const { getHealth, ping } = require('./controllers/systemHealthController');
 const { authLimiter, searchLimiter, uploadLimiter, smartLimiter } = require('./middleware/advancedRateLimit');
-const { graphqlHTTP } = require('express-graphql');
+const { createHandler } = require('graphql-http/lib/use/express');
 const { schema, root } = require('./graphql/schema');
 const { saveNote, getNotes, deleteNote, getAllNotes } = require('./controllers/notesController');
 const { logAction, getAuditLogs } = require('./controllers/auditController');
@@ -323,7 +323,7 @@ app.get('/api/admin/scheduled-posts', authenticate, requireAdmin, getScheduledPo
 app.delete('/api/admin/scheduled-posts/:postId', authenticate, requireAdmin, deleteScheduledPost);
 
 // GraphQL
-app.use('/graphql', graphqlHTTP({ schema, rootValue: root, graphiql: process.env.NODE_ENV !== 'production' }));
+app.all('/graphql', createHandler({ schema, rootValue: root }));
 
 app.use('/rss', rssRoutes);
 app.use(sitemapRoutes);
