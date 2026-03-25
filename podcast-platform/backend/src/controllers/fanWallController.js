@@ -192,5 +192,8 @@ const deleteMessage = async (req, res) => {
 module.exports = {
   addMessage,
   getMessages,
-  deleteMessage
+  deleteMessage,
+  addFanMessage: addMessage,
+  getFanMessages: getMessages,
+  deleteFanMessage: deleteMessage,
 };

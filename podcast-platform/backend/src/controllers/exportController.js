@@ -53,4 +53,4 @@ async function exportStats(req, res) {
   }
 }
 
-module.exports = { exportUsers, exportStats };
+module.exports = { exportUsers, exportStats, exportData: exportUsers };
