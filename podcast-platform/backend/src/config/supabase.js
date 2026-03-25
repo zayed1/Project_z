@@ -10,14 +10,16 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // التحقق من وجود المتغيرات البيئية | Validate env vars
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('خطأ: متغيرات Supabase البيئية مفقودة | Missing Supabase env vars');
-  process.exit(1);
+  console.error('SUPABASE_URL و SUPABASE_ANON_KEY مطلوبة | Required: SUPABASE_URL and SUPABASE_ANON_KEY');
 }
 
 // العميل العام (للعمليات العادية) | Public client
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // عميل الخدمة (للعمليات الإدارية) | Service role client
-const supabaseAdmin = supabaseServiceKey
+const supabaseAdmin = supabaseServiceKey && supabaseUrl
   ? createClient(supabaseUrl, supabaseServiceKey)
   : supabase;
 

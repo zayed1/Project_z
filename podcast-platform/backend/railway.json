@@ -5,8 +5,8 @@
   },
   "deploy": {
     "startCommand": "node src/server.js",
-    "healthcheckPath": "/api/settings",
+    "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 5
   }
 }
