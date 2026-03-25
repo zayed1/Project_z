@@ -205,5 +205,8 @@ const deletePost = async (req, res) => {
 module.exports = {
   createPost,
   getPosts,
-  deletePost
+  deletePost,
+  createScheduledPost: createPost,
+  getScheduledPosts: getPosts,
+  deleteScheduledPost: deletePost,
 };
