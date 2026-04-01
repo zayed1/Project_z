@@ -16,6 +16,9 @@ import Breadcrumbs from './components/Breadcrumbs';
 import ScrollToTop from './components/ScrollToTop';
 import WelcomeBanner from './components/WelcomeBanner';
 import OfflineBanner from './components/OfflineBanner';
+import SplashScreen from './components/SplashScreen';
+import FloatingActionButton from './components/FloatingActionButton';
+import GuideTooltips from './components/GuideTooltips';
 
 // Code Splitting - تحميل كسول | Lazy Loading Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -30,6 +33,7 @@ const PlaylistsPage = lazy(() => import('./pages/PlaylistsPage'));
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import useScrollRestore from './hooks/useScrollRestore';
@@ -92,6 +96,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+    <SplashScreen />
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <OfflineBanner />
       <ProgressBar />
@@ -234,6 +239,7 @@ export default function App() {
               <Route path="/creator" element={<CreatorDashboard />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </PageTransition>
@@ -245,6 +251,8 @@ export default function App() {
       <ScrollToTop />
       <MiniPlayer />
       <GlobalPlayer />
+      <FloatingActionButton />
+      <GuideTooltips />
     </div>
     </ErrorBoundary>
   );
